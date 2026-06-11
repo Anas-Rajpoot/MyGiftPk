@@ -16,6 +16,12 @@
   --color-hairline: var(--hairline);
   --color-gold: var(--gold);
   --color-gold-tint: var(--gold-tint);
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+  --color-success-border: var(--success-border);
+  --color-info: var(--info);
+  --color-info-tint: var(--info-tint);
+  --color-info-border: var(--info-border);
 
   /* Fonts (CSS vars injected by next/font in layout.tsx) */
   --font-display: var(--font-bebas);
@@ -25,6 +31,30 @@
   --radius-card: var(--radius-card);
   --radius-input: var(--radius-input);
   --radius-chip: var(--radius-chip);
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--cream) 25%,
+    var(--hairline) 50%,
+    var(--cream) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+    background: var(--hairline);
+  }
 }
 
 /* Base */

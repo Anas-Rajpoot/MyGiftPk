@@ -13,6 +13,14 @@
   --gold: #C9A24B;
   --gold-tint: #F8F1E2;
 
+  /* Semantic feedback colors (toast/alert states) */
+  --success: #2E7D32;
+  --success-tint: #F1F8E9;
+  --success-border: #C8E6C9;
+  --info: #0277BD;
+  --info-tint: #E1F5FE;
+  --info-border: #B3E5FC;
+
   /* Border radius */
   --radius-card: 12px;
   --radius-input: 8px;
