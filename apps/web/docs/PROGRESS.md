@@ -1,36 +1,56 @@
 # PROGRESS.md — MYGIFT Session Log
 
-## Phase 1 — Component Library
+## Phase 2 — Layout Shell + Admin-Driven Home
 
 ### Status: COMPLETE ✓
 
 ### Built
-- `components/ui/Button` — primary/secondary/ghost, loading spinner, disabled
-- `components/ui/Badge` — sale/new/gift variants
-- `components/ui/FilterChip` — pill chip, selected (wine) + removable
-- `components/ui/Skeleton` + SkeletonText + SkeletonProductCard
-- `components/ui/Breadcrumbs` — server component, aria-current
-- `components/ui/EmptyState` — icon, heading, description, Link CTA
-- `components/ui/Input` — label/error/hint, aria-invalid, aria-describedby
-- `components/ui/Select` — native select + custom ChevronDown, error state
-- `components/ui/QtyStepper` — +/- with min/max, aria-live
-- `components/ui/Drawer` — portal, Framer Motion slide-in, focus trap
-- `components/ui/Modal` — portal, scale+opacity animation, focus trap
-- `components/ui/Accordion` — AnimatePresence height 0→auto, ChevronDown rotate
-- `components/ui/Tabs` — layoutId sliding underline indicator
-- `components/ui/Toast` + `lib/toast.ts` — Zustand store, AnimatePresence
-- `components/ui/RibbonHeading` — SVG ribbon, useSyncExternalStore reduced-motion
-- `components/product/ProductCard` — stretched-link, hover crossfade, quick actions
-- `app/styleguide/InteractiveDemos.tsx` — client demos for all interactive components
-- `app/styleguide/page.tsx` — full showcase: colors, typography, all components
-- `styles/tokens.css` — added --success, --success-tint, --success-border, --info, --info-tint, --info-border
-- `app/globals.css` — mapped new feedback tokens to Tailwind via @theme inline
+**Data layer**
+- `lib/wp/queries/global.ts` — GET_GLOBAL_OPTIONS query + TypeScript interfaces (GlobalOptions, NavItem, FooterData, AnnouncementBarData)
+- `lib/wp/queries/home.ts` — GET_HOME_PAGE query + all block types (HomeBlock union, HeroSlide, CategoryTile, FeaturedTab, OccasionChip, TrustItem, FromAbroadData)
+- `lib/wp/queries/products.ts` — GET_PRODUCTS + GET_FEATURED_PRODUCTS queries + ProductNode type
+- `lib/wp/fixtures/index.ts` — expanded with full home blocks (hero×3 slides, 4 category tiles, 3 featured tabs, gift_banner, 8 occasion chips, from_abroad_block, trust_row) + full globalOptions (headerMenu with mega-menu children, 3 footer columns, socials, contact)
+- `lib/stores/cart.ts` — Zustand store (count, isOpen, openCart, closeCart, setCount)
+- `lib/seo/schema.ts` — organizationSchema(), webSiteSchema(), breadcrumbSchema()
+
+**Layout components**
+- `components/layout/AnnouncementBar.tsx` — server component, ink bg, conditional link wrap
+- `components/layout/Header.tsx` — client component: sticky, scroll shadow, logo, mega-menu dropdown (AnimatePresence), mobile slide-in nav, cart/wishlist/search icons, body scroll-lock
+- `components/layout/Footer.tsx` — server component: 4-column grid (brand + 3 link cols), inline SVG social icons, contact links
+- `components/layout/CartDrawer.tsx` — client component: uses Zustand isOpen, placeholder EmptyState (Phase 4 will fill)
+
+**Home sections**
+- `components/home/HeroSlider.tsx` — client, 3 slides, auto-advance 5s, animated dot indicators, prev/next arrows, wine-gradient placeholder when no real image, AnimatePresence slide transitions, prefers-reduced-motion safe
+- `components/home/CategoryTiles.tsx` — server, 2→4 col grid, 3:4 tiles with gradient overlay + hover label, color-coded placeholder bg per category
+- `components/home/FeaturedProductTabs.tsx` — server async, fetches products per tab server-side, passes JSX content to Tabs client component, "View all" link per tab
+- `components/home/GiftBanner.tsx` — server, wine bg + gold accents, 3-step graphic (Package→Gift→Smile icons), gold CTA button
+- `components/home/OccasionChips.tsx` — server, wrapping chip links to /gifts/{slug}, emoji labels
+- `components/home/FromAbroad.tsx` — server, split layout text+image, decorative placeholder when no image
+- `components/home/TrustRow.tsx` — server, 2→4 col icon+text row, mapped from fixture icon keys (truck/gift/shield-check/map-pin)
+- `components/home/HomeBlockRenderer.tsx` — async server component, switch on fieldGroupName renders blocks in WP order
+- `components/product/ProductCardGrid.tsx` — client wrapper grid, wires up toast + cart handlers
+
+**SEO + metadata**
+- `app/layout.tsx` — fetches globalOptions, renders AnnouncementBar/Header/CartDrawer/Footer, injects Organization + WebSite(SearchAction) JSON-LD in `<head>`
+- `app/page.tsx` — generateMetadata from WP Yoast SEO fields with fallbacks; renders HomeBlockRenderer
+
+**Component extensions**
+- `components/ui/RibbonHeading.tsx` — added `inverted` prop (ivory text + ribbon on dark bg), added `id` prop passthrough
+- `components/ui/Button.tsx` — added `as="link"` polymorphic prop (renders next/link), added `size="lg"` (h-14)
 
 ### Verified
 - [x] pnpm typecheck — clean
-- [x] pnpm lint — clean
-- [x] pnpm build — zero errors, /styleguide statically prerendered
-- [x] No hardcoded hex colors in components/ (`grep -rn "#[0-9a-fA-F]{3,6}" apps/web/components` returns nothing)
+- [x] pnpm lint — clean (0 errors, 0 warnings)
+- [x] pnpm build — zero errors, `/` statically prerendered with 8 fetchGraphQL calls resolved via MOCK_MODE
+- [x] No hardcoded hex colors in components/ or lib/seo/
+
+---
+
+## Phase 1 — Component Library
+
+### Status: COMPLETE ✓
+
+All 16 components built and verified. See prior session notes.
 
 ---
 
@@ -38,27 +58,13 @@
 
 ### Status: COMPLETE ✓
 
-### Built
-- Monorepo root (pnpm-workspace.yaml, package.json)
-- Next.js 16.2.9 + TypeScript + Tailwind v4 + ESLint scaffolded in apps/web/
-- zustand, framer-motion, clsx installed
-- Poppins 400/500/600 + Bebas Neue via next/font/google (self-hosted at build time)
-- styles/tokens.css — all design tokens from CLAUDE.md
-- Tailwind theme wired to CSS vars via @theme inline
-- .env.example with all required vars; .env.local with MOCK_MODE=true
-- lib/wp/client.ts — typed fetchGraphQL with tag-based ISR caching + MOCK_MODE
-- lib/wp/fixtures/ — mock data for development without live WP
-- app/api/revalidate/route.ts — secret-checked, revalidateTag(tag, 'max')
-- docs/WP-SETUP.md — full WordPress install checklist
-- wp-plugin/mygift-core/ — plugin header, settings stub, revalidate webhook
-- /styleguide route created
+Next.js 16.2.9, Tailwind v4, monorepo scaffold, WP plugin stub. See prior session notes.
 
 ---
 
-## Next: Phase 2 — Home Page
+## Next: Phase 3 — Shop, Category, Product, Quick View
 
-Components needed: HeroSection, CategoryGrid, FeaturedProductsRow, GiftTeaser CTA.
-All data via fetchGraphQL with MOCK_MODE. Mobile-first (375px).
+Pages needed: /shop, /category/[slug] (filters + URL params), /product/[slug] (gallery, variations, sticky ATC), Quick View parallel route.
 
 ---
 _Updated: 2026-06-11_

@@ -10,6 +10,8 @@ interface RibbonHeadingProps {
   as?: HeadingLevel
   align?: Align
   gold?: boolean
+  inverted?: boolean
+  id?: string
   className?: string
   children: React.ReactNode
 }
@@ -25,12 +27,13 @@ const getServerSnapshot = () => false
 
 interface RibbonSVGProps {
   gold: boolean
+  inverted: boolean
   animate: boolean
   align: Align
 }
 
-function RibbonSVG({ gold, animate, align }: RibbonSVGProps) {
-  const color = gold ? 'var(--gold)' : 'var(--wine)'
+function RibbonSVG({ gold, inverted, animate, align }: RibbonSVGProps) {
+  const color = gold ? 'var(--gold)' : inverted ? 'var(--ivory)' : 'var(--wine)'
   return (
     <svg
       aria-hidden
@@ -66,6 +69,8 @@ export function RibbonHeading({
   as: Tag = 'h2',
   align = 'left',
   gold = false,
+  inverted = false,
+  id,
   className,
   children,
 }: RibbonHeadingProps) {
@@ -87,12 +92,14 @@ export function RibbonHeading({
     return () => observer.disconnect()
   }, [])
 
+  const textColorClass = gold ? 'text-gold' : inverted ? 'text-ivory' : 'text-ink'
+
   return (
     <div ref={wrapperRef} className={clsx(align === 'center' && 'text-center', className)}>
-      <Tag className={clsx('font-display uppercase leading-none', gold ? 'text-gold' : 'text-ink')}>
+      <Tag id={id} className={clsx('font-display uppercase leading-none', textColorClass)}>
         {children}
       </Tag>
-      <RibbonSVG gold={gold} animate={!reducedMotion && visible} align={align} />
+      <RibbonSVG gold={gold} inverted={inverted} animate={!reducedMotion && visible} align={align} />
     </div>
   )
 }

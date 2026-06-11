@@ -1,20 +1,53 @@
-import Link from 'next/link'
+import type { Metadata } from 'next'
+import { fetchGraphQL } from '@/lib/wp/client'
+import { GET_HOME_PAGE } from '@/lib/wp/queries/home'
+import type { HomePageData } from '@/lib/wp/queries/home'
+import { HomeBlockRenderer } from '@/components/home/HomeBlockRenderer'
 
-export default function Home() {
-  return (
-    <main className="flex flex-col items-center justify-center min-h-screen gap-6 p-8">
-      <h1 className="font-display text-6xl uppercase tracking-widest text-wine">
-        MYGIFT
-      </h1>
-      <p className="font-body text-stone text-center max-w-md">
-        Headless WooCommerce store — Phase 0 scaffold is live.
-      </p>
-      <Link
-        href="/styleguide"
-        className="px-6 py-3 bg-wine text-ivory rounded-input font-body font-semibold text-sm tracking-wide hover:bg-wine-deep transition-colors"
-      >
-        View Styleguide →
-      </Link>
-    </main>
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await fetchGraphQL<HomePageData>(
+    GET_HOME_PAGE,
+    {},
+    { tags: ['home', 'global'], revalidate: 3600 }
   )
+  const seo = data.page?.seo
+
+  const title = seo?.title || 'MYGIFT — Gifts & Clothing Delivered Across Pakistan'
+  const description =
+    seo?.metaDesc ||
+    'Shop stitched & unstitched clothing for Women, Men and Kids. Build custom gift boxes delivered nationwide. Free shipping on orders over Rs. 3,000.'
+  const ogImage = seo?.opengraphImage?.sourceUrl ?? `${SITE_URL}/api/og?title=MYGIFT`
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}/` },
+    openGraph: {
+      title: seo?.opengraphTitle || title,
+      description: seo?.opengraphDescription || description,
+      url: `${SITE_URL}/`,
+      type: 'website',
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: seo?.opengraphTitle || title,
+      description: seo?.opengraphDescription || description,
+      images: [ogImage],
+    },
+  }
+}
+
+export default async function HomePage() {
+  const data = await fetchGraphQL<HomePageData>(
+    GET_HOME_PAGE,
+    {},
+    { tags: ['home', 'global'], revalidate: 3600 }
+  )
+
+  const blocks = data.page?.homepageBuilder?.blocks ?? []
+
+  return <HomeBlockRenderer blocks={blocks} />
 }
