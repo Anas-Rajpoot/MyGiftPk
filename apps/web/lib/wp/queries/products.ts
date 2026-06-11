@@ -50,6 +50,7 @@ export interface ProductNode {
   databaseId: number
   slug: string
   name: string
+  type?: string
   image: { sourceUrl: string; altText: string } | null
   price: string
   regularPrice: string

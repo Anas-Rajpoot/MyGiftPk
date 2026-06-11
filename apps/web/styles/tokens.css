@@ -13,6 +13,9 @@
   --gold: #C9A24B;
   --gold-tint: #F8F1E2;
 
+  /* Third-party brand colors (used only where integration requires it) */
+  --whatsapp: #25D366;
+
   /* Semantic feedback colors (toast/alert states) */
   --success: #2E7D32;
   --success-tint: #F1F8E9;

@@ -37,8 +37,10 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode
+  modal?: React.ReactNode
 }>) {
   const globalData = await fetchGraphQL<GlobalOptionsResponse>(
     GET_GLOBAL_OPTIONS,
@@ -62,7 +64,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteSchema) }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-cream text-ink antialiased">
+      <body className="min-h-screen flex flex-col bg-cream text-ink antialiased" suppressHydrationWarning>
         {opts?.announcementBar?.enabled && (
           <AnnouncementBar data={opts.announcementBar} />
         )}
@@ -71,6 +73,7 @@ export default async function RootLayout({
         <main className="flex-1">
           {children}
         </main>
+        {modal}
         <Footer data={opts?.footer ?? { columns: [], socials: {}, contact: {}, bottomText: '© 2025 MYGIFT' }} />
         <ToastContainer />
       </body>

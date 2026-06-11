@@ -1,6 +1,23 @@
 /* Mock data returned when MOCK_MODE=true. Matches the shape returned by real GraphQL queries.
    Expand these as needed while developing without a live WP install. */
 
+const MOCK_VARIATION_NODES = ['Stitched', 'Unstitched'].flatMap((type, ti) =>
+  ['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size, si) => ({
+    databaseId: ti * 100 + si + 1,
+    price: `Rs. ${type === 'Stitched' ? 3200 + si * 200 : 2800 + si * 200}`,
+    regularPrice: `Rs. ${type === 'Stitched' ? 3200 + si * 200 : 2800 + si * 200}`,
+    salePrice: type === 'Stitched' && si === 0 ? 'Rs. 2,800' : null,
+    stockStatus: type === 'Stitched' && size === 'XXL' ? 'OUT_OF_STOCK' : 'IN_STOCK',
+    stockQuantity: type === 'Stitched' && size === 'XXL' ? 0 : 5,
+    attributes: {
+      nodes: [
+        { name: 'attribute_pa_type', value: type },
+        { name: 'attribute_pa_size', value: size },
+      ],
+    },
+  }))
+)
+
 const MOCK_PRODUCTS = Array.from({ length: 8 }, (_, i) => ({
   id: `product-${i + 1}`,
   databaseId: i + 1,
@@ -262,6 +279,120 @@ export const fixtures: Record<string, unknown> = {
         { id: 2, name: 'Ribbon Wrap', price: 150 },
       ],
       messageCharLimit: 200,
+    },
+  },
+
+  GetShopProducts: {
+    products: {
+      found: 8,
+      pageInfo: { hasNextPage: false },
+      nodes: MOCK_PRODUCTS,
+    },
+  },
+
+  GetCategoryWithProducts: {
+    productCategory: {
+      id: 'cat-1',
+      slug: 'women',
+      name: 'Women',
+      description: 'Explore our curated women\'s collection — stitched and unstitched lawn, chiffon, and khaddar.',
+      count: 24,
+      image: null,
+      acfCategoryIntro: {
+        intro: 'Our women\'s collection blends traditional Pakistani fashion with everyday wearability. From vibrant summer lawns to elegant chiffon dupattas, each piece is crafted for the modern Pakistani woman.',
+      },
+      seo: {
+        title: 'Women\'s Clothing — Stitched & Unstitched | MYGIFT',
+        metaDesc: 'Shop women\'s stitched and unstitched clothing. Lawn, chiffon, khaddar and more. Nationwide delivery across Pakistan.',
+        canonical: 'https://mygift.pk/category/women',
+        opengraphTitle: 'Women\'s Clothing | MYGIFT',
+        opengraphDescription: 'Stitched & unstitched clothing for women delivered across Pakistan.',
+        opengraphImage: null,
+      },
+    },
+    products: {
+      found: 8,
+      pageInfo: { hasNextPage: false },
+      nodes: MOCK_PRODUCTS,
+    },
+  },
+
+  GetProduct: {
+    product: {
+      id: 'product-1',
+      databaseId: 1,
+      slug: 'mock-product-1',
+      name: 'Red Lawn 3-Piece Unstitched',
+      type: 'VARIABLE',
+      sku: 'MOCK-RED-LAWN-001',
+      description: '<p>A stunning 3-piece unstitched lawn suit in vibrant red. Features an embroidered shirt front, printed dupatta, and dyed trouser fabric.</p><ul><li>3-piece: shirt + dupatta + trouser</li><li>Premium lawn fabric</li><li>Machine embroidered front</li><li>Digital printed dupatta</li></ul>',
+      shortDescription: 'Premium red lawn 3-piece unstitched with embroidered front and printed dupatta.',
+      image: null,
+      galleryImages: { nodes: [] },
+      price: 'Rs. 2,800 – Rs. 3,200',
+      regularPrice: 'Rs. 2,800 – Rs. 3,200',
+      salePrice: null,
+      onSale: false,
+      stockStatus: 'IN_STOCK',
+      productCategories: { nodes: [{ slug: 'women', name: 'Women' }] },
+      attributes: {
+        nodes: [
+          {
+            name: 'pa_type',
+            label: 'Type',
+            options: ['Stitched', 'Unstitched'],
+            variation: true,
+          },
+          {
+            name: 'pa_size',
+            label: 'Size',
+            options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+            variation: true,
+          },
+        ],
+      },
+      variations: {
+        nodes: MOCK_VARIATION_NODES,
+      },
+      related: {
+        nodes: MOCK_PRODUCTS.slice(1, 5).map((p) => ({
+          id: p.id,
+          databaseId: p.databaseId,
+          slug: p.slug,
+          name: p.name,
+          image: p.image,
+          price: p.price,
+          regularPrice: p.regularPrice,
+          salePrice: p.salePrice,
+          onSale: p.onSale,
+          stockStatus: p.stockStatus,
+        })),
+      },
+      seo: {
+        title: 'Red Lawn 3-Piece Unstitched | MYGIFT',
+        metaDesc: 'Shop the Red Lawn 3-Piece Unstitched suit. Premium lawn fabric with embroidered front. Available stitched or unstitched in sizes XS–XXL.',
+        canonical: 'https://mygift.pk/product/mock-product-1',
+        opengraphTitle: 'Red Lawn 3-Piece Unstitched | MYGIFT',
+        opengraphDescription: 'Premium red lawn 3-piece unstitched with embroidered front and printed dupatta.',
+        opengraphImage: null,
+      },
+    },
+  },
+
+  GetProductSlugs: {
+    products: {
+      nodes: MOCK_PRODUCTS.map((p) => ({ slug: p.slug })),
+    },
+  },
+
+  GetCategorySlugs: {
+    productCategories: {
+      nodes: [
+        { slug: 'women' },
+        { slug: 'men' },
+        { slug: 'kids' },
+        { slug: 'gifts' },
+      ],
     },
   },
 }

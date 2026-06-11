@@ -109,7 +109,7 @@ export function Header({ navItems }: HeaderProps) {
                         >
                           {item.children!.map((child) => (
                             <Link
-                              key={child.link}
+                              key={child.label}
                               href={child.link}
                               className="block px-4 py-2 font-body text-sm text-ink hover:text-wine hover:bg-wine-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-wine"
                               onClick={() => setActiveMenu(null)}
@@ -210,7 +210,7 @@ export function Header({ navItems }: HeaderProps) {
                       <div className="pb-2">
                         {item.children.map((child) => (
                           <Link
-                            key={child.link}
+                            key={child.label}
                             href={child.link}
                             className="block px-8 py-2 font-body text-sm text-stone hover:text-wine hover:bg-wine-tint transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-wine"
                             onClick={() => setMenuOpen(false)}

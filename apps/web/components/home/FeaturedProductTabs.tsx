@@ -5,21 +5,31 @@ import { ProductCardGrid } from '@/components/product/ProductCardGrid'
 import { fetchGraphQL } from '@/lib/wp/client'
 import { GET_FEATURED_PRODUCTS } from '@/lib/wp/queries/products'
 import type { ProductsResponse } from '@/lib/wp/queries/products'
+import type { ProductNode } from '@/lib/wp/queries/products'
+import { fetchWooProducts, WOO_REST_ENABLED } from '@/lib/woo/rest-client'
 import type { FeaturedTab } from '@/lib/wp/queries/home'
 
 interface FeaturedProductTabsProps {
   tabs: FeaturedTab[]
 }
 
+async function getTabProducts(categorySlug: string): Promise<ProductNode[]> {
+  if (WOO_REST_ENABLED) {
+    const result = await fetchWooProducts({ category: categorySlug, first: 8 })
+    return result.nodes
+  }
+  const data = await fetchGraphQL<ProductsResponse>(
+    GET_FEATURED_PRODUCTS,
+    { categorySlug, first: 8 },
+    { tags: [`category:${categorySlug}`, 'home'], revalidate: 3600 }
+  )
+  return data.products?.nodes ?? []
+}
+
 export async function FeaturedProductTabs({ tabs }: FeaturedProductTabsProps) {
   const tabsWithContent = await Promise.all(
     tabs.map(async (tab) => {
-      const data = await fetchGraphQL<ProductsResponse>(
-        GET_FEATURED_PRODUCTS,
-        { categorySlug: tab.categorySlug, first: 8 },
-        { tags: [`category:${tab.categorySlug}`, 'home'], revalidate: 3600 }
-      )
-      const products = data.products?.nodes ?? []
+      const products = await getTabProducts(tab.categorySlug)
 
       return {
         id: tab.id,

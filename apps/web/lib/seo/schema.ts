@@ -1,4 +1,5 @@
 import type { FooterSocials } from '@/lib/wp/queries/global'
+import type { ProductFull, CategoryData } from '@/lib/wp/queries/shop'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
 
@@ -45,5 +46,41 @@ export function breadcrumbSchema(items: { name: string; url: string }[]) {
       name: item.name,
       item: item.url,
     })),
+  }
+}
+
+export function productSchema(product: ProductFull) {
+  const url = `${BASE}/product/${product.slug}`
+  const inStock = product.stockStatus === 'IN_STOCK'
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.shortDescription || product.description,
+    sku: product.sku,
+    url,
+    image: product.image?.sourceUrl
+      ? [product.image.sourceUrl, ...product.galleryImages.nodes.map((n) => n.sourceUrl)]
+      : [],
+    brand: { '@type': 'Brand', name: 'MYGIFT' },
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'PKR',
+      price: product.salePrice ?? product.price,
+      availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url,
+      seller: { '@type': 'Organization', name: 'MYGIFT' },
+    },
+  }
+}
+
+export function collectionPageSchema(category: CategoryData) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: category.seo.title || category.name,
+    description: category.seo.metaDesc || category.description,
+    url: `${BASE}/category/${category.slug}`,
+    numberOfItems: category.count,
   }
 }
