@@ -1,0 +1,26 @@
+/* MYGIFT Design Tokens — single source of truth for all colors, fonts, spacing.
+   Import this file everywhere you need CSS vars. Never hardcode values elsewhere. */
+:root {
+  /* Colors */
+  --wine: #7E2B36;
+  --wine-deep: #5C1F28;
+  --wine-tint: #F6ECEE;
+  --cream: #FAF8F5;
+  --ivory: #FFFFFF;
+  --ink: #1F1A17;
+  --stone: #8A8178;
+  --hairline: #E8E2DA;
+  --gold: #C9A24B;
+  --gold-tint: #F8F1E2;
+
+  /* Border radius */
+  --radius-card: 12px;
+  --radius-input: 8px;
+  --radius-chip: 999px;
+
+  /* Shadows (drawer + modal only) */
+  --shadow-float: 0 8px 30px rgba(31, 26, 23, 0.12);
+
+  /* Overlay */
+  --overlay-bg: rgba(31, 26, 23, 0.4);
+}

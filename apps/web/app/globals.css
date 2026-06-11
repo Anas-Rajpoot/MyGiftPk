@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Expose design tokens to Tailwind v4 utilities.
+   `inline` means generated classes use var(--wine) instead of the literal hex —
+   keeps tokens as the single source of truth at runtime. */
+@theme inline {
+  /* Colors */
+  --color-wine: var(--wine);
+  --color-wine-deep: var(--wine-deep);
+  --color-wine-tint: var(--wine-tint);
+  --color-cream: var(--cream);
+  --color-ivory: var(--ivory);
+  --color-ink: var(--ink);
+  --color-stone: var(--stone);
+  --color-hairline: var(--hairline);
+  --color-gold: var(--gold);
+  --color-gold-tint: var(--gold-tint);
+
+  /* Fonts (CSS vars injected by next/font in layout.tsx) */
+  --font-display: var(--font-bebas);
+  --font-body: var(--font-poppins);
+
+  /* Border radius */
+  --radius-card: var(--radius-card);
+  --radius-input: var(--radius-input);
+  --radius-chip: var(--radius-chip);
+}
+
+/* Base */
+html {
+  background-color: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+}
