@@ -87,12 +87,14 @@ function mygift_core_init() {
 		MYGIFT_Admin_Columns::init();
 	}
 
-	// Email classes extend WC_Email.  WooCommerce registers its autoloader when
-	// its plugin file is included, so by plugins_loaded priority 10 the autoloader
-	// is ready and WC_Email can be resolved.  We still load them last so there is
-	// no chance of a class-not-found error.
-	require_once MYGIFT_CORE_DIR . 'includes/class-order-emails.php';
-	MYGIFT_Order_Emails::init();
+	// WC_Email is NOT available at plugins_loaded — WooCommerce loads its email
+	// infrastructure lazily when woocommerce_email_classes fires (during init).
+	// We must defer the require_once until that moment, otherwise PHP cannot
+	// resolve the `extends WC_Email` inheritance when the file is parsed.
+	add_filter( 'woocommerce_email_classes', function ( array $emails ) {
+		require_once MYGIFT_CORE_DIR . 'includes/class-order-emails.php';
+		return MYGIFT_Order_Emails::register_emails( $emails );
+	}, 10, 1 );
 }
 
 // ── Requirement helpers ────────────────────────────────────────────────────────
