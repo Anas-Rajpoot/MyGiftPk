@@ -1,5 +1,42 @@
 # PROGRESS.md — MYGIFT Session Log
 
+## Phase 5 — Checkout + Order Confirmation
+
+### Status: COMPLETE ✓
+
+### Built
+
+**Checkout lib**
+- `lib/woo/checkout.ts` — `storeCheckout()` via Store API `/checkout` POST (uses same Cart-Token session); `restCreateOrder()` via WooCommerce REST v3 fallback; `CheckoutAddress`, `CheckoutPayload`, `StoreCheckoutResponse`, `RestOrderPayload` types; `PK_PROVINCES` list (7 provinces with ISO state codes); `PAYMENT_METHODS` (COD + bank transfer)
+
+**Checkout API route**
+- `app/api/checkout/route.ts` — validates billing fields server-side; re-fetches cart from Store API to confirm it's not empty; builds `CheckoutPayload`; calls `storeCheckout(payload, token)`; on success: calls `storeClearCart`, deletes `woo-cart-token` cookie so next visit starts with a fresh session; returns `{ order_id, order_number, order_key, order_status, payment_redirect }`
+
+**Checkout UI**
+- `app/checkout/page.tsx` — dynamic, noindex server shell
+- `components/checkout/CheckoutClient.tsx` — full client checkout:
+  - Contact section (first/last name, email, phone)
+  - Delivery address (address, city, province dropdown, postcode, country)
+  - Payment method selector (COD with truck icon, bank transfer with account details revealed on select)
+  - Order notes textarea
+  - Order summary sidebar (sticky desktop / collapsible accordion mobile) — shows cart items with quantity badge, discounts, subtotal, shipping, total
+  - Place Order button with lock icon + total, spinner while submitting
+  - Client-side validation (required fields, email format, phone format) with inline errors
+  - Server error display
+  - On success: clears Zustand cart, redirects to confirmation or payment gateway URL
+
+**Order confirmation**
+- `app/order-confirmation/page.tsx` — reads `?id`, `?num`, `?method` params; shows order number card; COD instructions (delivery timeline); Bank Transfer instructions (account details + reference number); WhatsApp support link; Continue Shopping CTA
+
+### Verified
+- [x] pnpm typecheck — clean
+- [x] pnpm lint — clean
+- [x] pnpm build — zero errors; /checkout dynamic; /order-confirmation static; /api/checkout dynamic
+
+### Next: Phase 6 — Gift Builder
+
+---
+
 ## Phase 2 — Layout Shell + Admin-Driven Home
 
 ### Status: COMPLETE ✓
