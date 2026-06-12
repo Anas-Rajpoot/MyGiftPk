@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogImage = seo?.opengraphImage?.sourceUrl ?? `${SITE_URL}/api/og?title=MYGIFT`
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: `${SITE_URL}/` },
     openGraph: {

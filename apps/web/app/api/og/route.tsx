@@ -5,7 +5,6 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const title = searchParams.get('title') ?? 'MYGIFT'
   const sub = searchParams.get('sub') ?? 'Gifts & Clothing Delivered Across Pakistan'
-  const img = searchParams.get('img') ?? null
 
   return new ImageResponse(
     (
@@ -20,54 +19,23 @@ export async function GET(req: NextRequest) {
           fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
         }}
       >
-        {/* Product/category image left half */}
-        {img && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={img}
-            alt=""
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: '560px',
-              height: '630px',
-              objectFit: 'cover',
-            }}
-          />
-        )}
-        {img && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: '560px',
-              height: '630px',
-              background: 'linear-gradient(to right, rgba(31,26,23,0.5) 0%, transparent 100%)',
-              display: 'flex',
-            }}
-          />
-        )}
-
         {/* Content panel */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            padding: img ? '60px 64px 60px 48px' : '60px 80px',
-            marginLeft: img ? '520px' : '0',
+            padding: '80px 100px',
             flex: 1,
           }}
         >
-          {/* Brand */}
+          {/* Brand mark */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              marginBottom: '32px',
+              marginBottom: '36px',
             }}
           >
             <div
@@ -95,13 +63,13 @@ export async function GET(req: NextRequest) {
           {/* Title */}
           <div
             style={{
-              fontSize: title.length > 35 ? '52px' : '64px',
+              fontSize: title.length > 35 ? '52px' : '68px',
               fontWeight: 800,
               lineHeight: 1.05,
               color: '#1F1A17',
               letterSpacing: '-0.01em',
               textTransform: 'uppercase',
-              marginBottom: '20px',
+              marginBottom: '24px',
               display: 'flex',
               flexWrap: 'wrap',
             }}
@@ -114,13 +82,13 @@ export async function GET(req: NextRequest) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              marginBottom: '24px',
+              marginBottom: '28px',
             }}
           >
             <div
               style={{
                 height: '2px',
-                width: '72px',
+                width: '80px',
                 background: '#7E2B36',
                 borderRadius: '1px',
                 display: 'flex',
@@ -141,7 +109,7 @@ export async function GET(req: NextRequest) {
           {/* Subtext */}
           <div
             style={{
-              fontSize: '22px',
+              fontSize: '24px',
               color: '#8A8178',
               lineHeight: 1.4,
               display: 'flex',

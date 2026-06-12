@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: cat.seo?.title ?? cat.name,
     description: cat.seo?.metaDesc ?? cat.description,
-    alternates: { canonical: cat.seo?.canonical ?? `${base}/category/${slug}` },
+    alternates: { canonical: `${base}/category/${slug}` },
     openGraph: {
       title: cat.seo?.opengraphTitle ?? cat.name,
       description: cat.seo?.opengraphDescription ?? cat.description ?? '',
