@@ -29,7 +29,7 @@ export function CategoryTiles({ tiles }: CategoryTilesProps) {
             return (
               <li key={tile.slug}>
                 <Link
-                  href={`/category/${tile.slug}`}
+                  href={tile.link ?? `/category/${tile.slug}`}
                   className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine focus-visible:ring-offset-2 rounded-card"
                 >
                   <div className={`relative aspect-[3/4] rounded-card overflow-hidden ${colorClass}`}>

@@ -196,8 +196,8 @@ export const fixtures: Record<string, unknown> = {
             tiles: [
               { slug: 'women', name: 'Women', image: null },
               { slug: 'men', name: 'Men', image: null },
-              { slug: 'kids', name: 'Kids', image: null },
-              { slug: 'gifts', name: 'Gifts', image: null },
+              { slug: 'birthday', name: 'Birthday', image: null },
+              { slug: 'gifts', name: 'Gifts', image: null, link: '/gifts' },
             ],
           },
           {

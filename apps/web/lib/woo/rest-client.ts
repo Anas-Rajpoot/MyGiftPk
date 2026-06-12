@@ -368,6 +368,30 @@ export async function fetchWooCategorySlugs(): Promise<string[]> {
   return list.map((c) => c.slug)
 }
 
+export interface WooCategoryCard {
+  id: string
+  slug: string
+  name: string
+  count: number
+  image: { sourceUrl: string; altText: string } | null
+}
+
+export async function fetchWooAllCategories(hideEmpty = true): Promise<WooCategoryCard[]> {
+  const list = await wooGet<WooRestCategory[]>('/products/categories', {
+    per_page: 100,
+    hide_empty: hideEmpty ? 'true' : 'false',
+    orderby: 'count',
+    order: 'desc',
+  })
+  return list.map((c) => ({
+    id: String(c.id),
+    slug: c.slug,
+    name: c.name,
+    count: c.count,
+    image: c.image ? { sourceUrl: c.image.src, altText: c.image.alt ?? '' } : null,
+  }))
+}
+
 export async function fetchWooRelatedProducts(
   categorySlug: string,
   excludeId: number,

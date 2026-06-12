@@ -83,6 +83,7 @@ export interface CategoryTile {
   slug: string
   name: string
   image: WpImage | null
+  link?: string
 }
 
 export interface FeaturedTab {
