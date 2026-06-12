@@ -1,5 +1,41 @@
 # PROGRESS.md — MYGIFT Session Log
 
+## Phase 6 — Gift Builder
+
+### Status: COMPLETE ✓
+
+### Built
+
+**Data layer**
+- `lib/wp/queries/gift.ts` — `GET_GIFT_BUILDER_OPTIONS` query + TypeScript interfaces (`GiftBox`, `GiftComponent`, `GiftAddOn`, `GiftBuilderOptions`, `GiftBuilderOptionsResponse`)
+- `lib/wp/fixtures/index.ts` — added `GetGiftBuilderOptions` fixture: 3 boxes, 13 components across 4 categories (Chocolates/Candies/Biscuits/Extras), 2 add-ons, 6 ribbon colors, 7 occasions
+- `lib/stores/gift.ts` — Zustand store persisted to `mygift-builder-v1`; box selection with capacity trimming; item add/remove/qty with slot enforcement; add-ons toggle; `selectSlotsUsed` + `selectDisplayTotal` selectors
+
+**Server API**
+- `app/api/gift/add-to-cart/route.ts` — validates boxId, item qty sanity, message sanitization; in MOCK_MODE validates against fixture prices and respects capacity; computes `serverTotal`; returns 409 with `updatedTotal` if `clientTotal` drifts; on success returns normalized `CartData` with bundle item appended; real mode returns 503 until WP plugin installed
+
+**UI Components**
+- `components/gift/GiftProgress.tsx` — gold step bar, 4 labeled steps with done/active/pending states
+- `components/gift/StepBox.tsx` — 3 box cards, gold selection ring + check badge, price + capacity
+- `components/gift/StepFill.tsx` — category tab switcher (gold active indicator), 13 component cards with placeholder emoji, add/qty stepper/remove per card, slot dots tracker, "Box is full" banner, selection tray with tags
+- `components/gift/StepPersonalize.tsx` — message textarea with live char count + card preview, ribbon color swatches (6, with inline CSS color), occasion pill grid (single-select), add-on toggles with checkboxes
+- `components/gift/StepReview.tsx` — gift summary card (box, items, personalisation, add-ons, price breakdown), 409 price mismatch banner, "Add Gift to Cart" CTA with spinner; on success sets Zustand cart, opens drawer, resets builder
+- `components/gift/GiftBuilderShell.tsx` — orchestrates 4 steps; animated price ticker (RAF easing); "Start over" with 3-second confirm safety; fixed bottom bar (Back + gold total + Next/Review); `canProceed` gate on step 1
+- `components/gift/GiftBuilderLoader.tsx` — `'use client'` wrapper for `dynamic(..., { ssr: false })`; Skeleton fallback
+
+**Page**
+- `app/gift-builder/page.tsx` — `force-dynamic`, fetches `GetGiftBuilderOptions` from WP/fixture, renders `GiftBuilderLoader`
+
+### Verified
+- [x] pnpm typecheck — clean
+- [x] pnpm lint — 0 errors, 5 pre-existing warnings (checkout only)
+- [x] pnpm build — zero errors; /gift-builder dynamic; /api/gift/add-to-cart dynamic
+- [x] No hardcoded hex colors (except RIBBON_SWATCHES navy/blush/sage which have no design token)
+
+### Next: Phase 7 — WP Plugin Integration (mygift-core)
+
+---
+
 ## Phase 5 — Checkout + Order Confirmation
 
 ### Status: COMPLETE ✓
@@ -33,7 +69,7 @@
 - [x] pnpm lint — clean
 - [x] pnpm build — zero errors; /checkout dynamic; /order-confirmation static; /api/checkout dynamic
 
-### Next: Phase 6 — Gift Builder
+### Next: Phase 7 — WP Plugin Integration (mygift-core)
 
 ---
 

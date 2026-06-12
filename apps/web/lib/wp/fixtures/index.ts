@@ -395,4 +395,37 @@ export const fixtures: Record<string, unknown> = {
       ],
     },
   },
+
+  GetGiftBuilderOptions: {
+    giftBuilderOptions: {
+      boxes: [
+        { id: 1, name: 'Small Gift Box', image: null, basePrice: 500, capacity: 3 },
+        { id: 2, name: 'Medium Gift Box', image: null, basePrice: 800, capacity: 5 },
+        { id: 3, name: 'Large Gift Box', image: null, basePrice: 1200, capacity: 8 },
+      ],
+      components: [
+        { productId: 101, name: 'Ferrero Rocher 3pc', image: null, price: 850, category: 'Chocolates', stockStatus: 'IN_STOCK', stockQuantity: 20 },
+        { productId: 102, name: 'Galaxy Chocolate Bar', image: null, price: 300, category: 'Chocolates', stockStatus: 'IN_STOCK', stockQuantity: 30 },
+        { productId: 103, name: 'Cadbury Dairy Milk', image: null, price: 250, category: 'Chocolates', stockStatus: 'IN_STOCK', stockQuantity: 25 },
+        { productId: 104, name: 'Toblerone 100g', image: null, price: 600, category: 'Chocolates', stockStatus: 'IN_STOCK', stockQuantity: 15 },
+        { productId: 201, name: 'Jolly Rancher Pack', image: null, price: 450, category: 'Candies', stockStatus: 'IN_STOCK', stockQuantity: 20 },
+        { productId: 202, name: 'Candy Cane Pack', image: null, price: 200, category: 'Candies', stockStatus: 'IN_STOCK', stockQuantity: 30 },
+        { productId: 203, name: 'Gummy Bears 100g', image: null, price: 350, category: 'Candies', stockStatus: 'IN_STOCK', stockQuantity: 20 },
+        { productId: 301, name: 'Oreo Pack', image: null, price: 300, category: 'Biscuits', stockStatus: 'IN_STOCK', stockQuantity: 25 },
+        { productId: 302, name: 'Lotus Biscoff Pack', image: null, price: 600, category: 'Biscuits', stockStatus: 'IN_STOCK', stockQuantity: 10 },
+        { productId: 303, name: 'Digestive Biscuits', image: null, price: 250, category: 'Biscuits', stockStatus: 'IN_STOCK', stockQuantity: 30 },
+        { productId: 401, name: 'Rose Petals Pack', image: null, price: 200, category: 'Extras', stockStatus: 'IN_STOCK', stockQuantity: 20 },
+        { productId: 402, name: 'Confetti Pack', image: null, price: 150, category: 'Extras', stockStatus: 'IN_STOCK', stockQuantity: 30 },
+        { productId: 403, name: 'Mini Plush Bear', image: null, price: 400, category: 'Extras', stockStatus: 'IN_STOCK', stockQuantity: 15 },
+      ],
+      addOns: [
+        { id: 1, name: 'Photo Print', price: 500 },
+        { id: 2, name: 'Premium Ribbon', price: 300 },
+      ],
+      categories: ['Chocolates', 'Candies', 'Biscuits', 'Extras'],
+      messageCharLimit: 200,
+      ribbonColors: ['Wine Red', 'Gold', 'Ivory', 'Navy', 'Blush Pink', 'Sage Green'],
+      occasions: ['Birthday', 'Anniversary', 'Eid', "Mother's Day", 'Baby Shower', 'Wedding', 'Just Because'],
+    },
+  },
 }
