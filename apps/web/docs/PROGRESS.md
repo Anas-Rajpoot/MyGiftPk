@@ -1,5 +1,187 @@
 # PROGRESS.md — MYGIFT Session Log
 
+## Site Hardening + Plugin Rewrite (v0.3.0) — 2026-06-12
+
+### Status: COMPLETE ✓
+
+### Next.js hardening (apps/web/)
+- `proxy.ts` — Next.js 16 route protection for `/account/*` (replaces deprecated middleware.ts; function must be named `proxy`)
+- `lib/utils/csrf.ts` — Origin-header CSRF validation shared across API routes
+- `lib/auth/server.ts` — JWT_SECRET now throws in production when unset (no silent fallback)
+- `app/api/auth/login/route.ts` — rate-limited 5 req/60s per IP
+- `app/api/auth/register/route.ts` — rate-limited 3 req/60s; stricter email regex
+- `app/api/checkout/route.ts` + `app/api/cart/add/route.ts` + `app/api/gift/add-to-cart/route.ts` — CSRF origin check on all mutation routes
+- `app/api/gift/add-to-cart/route.ts` — HTML entity + control-char safe gift message sanitizer
+- `app/api/revalidate/route.ts` — optional timestamp replay-attack guard (±5 min); restored `revalidateTag(tag, 'max')` (Next.js 16 requires 2 args)
+- `app/api/search/route.ts` — changed `revalidate: 0` → `revalidate: 60` (no longer bypasses CDN cache)
+- `app/layout.tsx` — `localBusinessSchema()` injected as JSON-LD
+- `next.config.ts` — `formats: ['image/avif', 'image/webp']` for AVIF image optimization
+- `docs/DECISIONS.md` — D-005 through D-008
+
+### WordPress plugin rewrite (wp-plugin/mygift-core/ v0.3.0)
+
+**Root cause of fatal activation error (fixed):**
+1. `str_contains()` is PHP 8.0+ — replaced with `strpos() !== false` throughout
+2. Email classes extending `WC_Email` were required at top level before WooCommerce autoloader was ready
+
+**All 11 files rewritten/updated:**
+- `mygift-core.php` — industry-standard headers, constants, HPOS compatibility declaration, proper lifecycle hooks, deferred loading
+- `uninstall.php` (new) — `WP_UNINSTALL_PLUGIN` guard; removes options + transients; preserves order meta
+- `includes/class-activator.php` (new) — PHP/WC version checks; `seed_options()` via `add_option()` (survives re-activation); `flush_rewrite_rules()`
+- `includes/class-deactivator.php` (new) — unschedules cron; `flush_rewrite_rules()`
+- `includes/class-settings.php` — added `ABSPATH` guard; `settings_errors()` on render; no WC dependency
+- `includes/class-revalidate-webhook.php` — `str_contains` → `strpos`; `timestamp` added to webhook body
+- `includes/class-order-statuses.php` — `ABSPATH` guard added
+- `includes/class-status-timestamps.php` — `ABSPATH` guard added
+- `includes/class-shipment-tracking.php` — `fn()` arrow function → regular function for PHP 7.4 safety; `ABSPATH` guard
+- `includes/class-order-emails.php` — loaded LAST inside `mygift_core_init()` so `WC_Email` is available; `ABSPATH` guard; emoji stripped
+- `includes/class-admin-columns.php` — `ABSPATH` guard added
+
+**Upload:** `wp-plugin/mygift-core.zip` — upload via WP Admin > Plugins > Add New > Upload Plugin
+
+### QA checklist (WordPress)
+- [ ] Upload `mygift-core.zip` → activate → no fatal error
+- [ ] Settings page visible at WP Admin > Settings > MYGIFT Core
+- [ ] Enter Revalidate Secret + Next.js URL → save → "Settings saved" notice shows
+- [ ] Custom statuses visible in order status dropdown (Confirmed / Packed / Shipped)
+- [ ] Shipment Tracking meta box appears on order edit screen
+- [ ] Enter tracking number → URL auto-builds → "Mark as Shipped" transitions order
+- [ ] Shipped email arrives with correct tracking details
+- [ ] Save a product in WP → Next.js revalidation fires (check Next.js logs)
+
+### Next
+**Phase 8: Customer Account + Auth**
+
+---
+
+## Order Tracking Backend (mygift-core plugin v0.2.0)
+
+### Status: SUPERSEDED — see v0.3.0 rewrite above
+
+### Built
+
+**WP plugin: wp-plugin/mygift-core/**
+
+- **`mygift-core.php`** (v0.2.0) — requires and bootstraps all new classes; emails registered on `woocommerce_loaded`
+- **`includes/class-order-statuses.php`** — Registers `wc-confirmed`, `wc-packed`, `wc-shipped` post statuses; inserts them in WC status dropdown immediately after `wc-processing`; adds bulk actions (`mark_confirmed`, `mark_packed`, `mark_shipped`) for both traditional and HPOS order lists; colored admin badge CSS (blue/gold/wine)
+- **`includes/class-status-timestamps.php`** — Hooks `woocommerce_order_status_changed`; writes ISO-8601 timestamps to `_ts_confirmed`, `_ts_packed`, `_ts_shipped`, `_ts_delivered` meta on first transition (never overwritten — audit trail)
+- **`includes/class-shipment-tracking.php`** — "Shipment Tracking" meta box on order edit screen (side column); courier select (TCS/Leopards/PostEx/M&P/Trax/Other); tracking number text; auto-built tracking URL (JavaScript auto-fills from courier URL pattern + tracking number); manual override checkbox; "Mark as Shipped" one-click button (saves tracking + transitions to `wc-shipped`); HPOS-compatible via `wc_get_page_screen_id()`; saves `_courier`, `_tracking_number`, `_tracking_url`
+- **`includes/class-order-emails.php`** — Two email classes extending `WC_Email`:
+  - `MYGIFT_Email_Order_Shipped` — triggered on `woocommerce_order_status_shipped_notification`; branded HTML email (wine header, cream bg, white card); tracking card + wine CTA button; gift message echo for gift orders; plain-text fallback
+  - `MYGIFT_Email_Order_Packed` — triggered on `woocommerce_order_status_packed_notification`; short "almost there" email; enabled via settings toggle
+- **`includes/class-admin-columns.php`** — "Tracking" column on order list; shows courier label + tracking number as clickable link; HPOS-compatible (both `edit-shop_order` and `woocommerce_page_wc-orders` hooks)
+- **`includes/class-settings.php`** (updated) — Added "Packed Email" toggle to settings page; sanitized separately
+
+**Next.js: apps/web/**
+
+- **`lib/woo/order-status.ts`** (new) — Canonical status map shared between actions.ts and OrderTimeline.tsx:
+  - `TimelineStatus` type: `placed | confirmed | packed | shipped | delivered`
+  - `OrderDisplayStatus`: `TimelineStatus | 'cancelled'`
+  - `TIMELINE_STEPS` array with key+label pairs
+  - `WOO_STATUS_MAP` record + `mapWooStatus()` function
+  - `getStepIndex()` helper
+- **`app/track-order/actions.ts`** (updated) — Imports from `lib/woo/order-status`; reads new meta keys (`_courier`, `_ts_confirmed`, `_ts_packed`, `_ts_shipped`, `_ts_delivered`); builds `timestamps` partial record; handles cancelled/refunded/failed as `cancelled` state; mock updated with `timestamps` fixture
+- **`components/content/OrderTimeline.tsx`** (updated) — Imports `TIMELINE_STEPS`/`getStepIndex` from `lib/woo/order-status`; cancelled state shows info banner with contact link instead of timeline; per-step timestamps displayed when present; minor transition animation on wine connector line
+
+**Skill: `.claude/skills/headless-wp-woo/SKILL.md`** (updated) — Section 6a added: custom statuses, canonical status→timeline map table, shipment tracking meta keys table, REST response field list with security note
+
+### Courier tracking URL patterns
+| Courier  | URL pattern                                           |
+|----------|-------------------------------------------------------|
+| TCS      | `https://www.tcsexpress.com/track/{number}`           |
+| Leopards | `https://www.leopardscourier.com/track/{number}`      |
+| PostEx   | `https://postex.pk/track-order/{number}`              |
+| M&P      | `https://mp.pk/tracking?cn={number}`                  |
+| Trax     | `https://traxlogistic.com/tracking/{number}`          |
+| Other    | Manual URL required                                   |
+
+### QA checklist (run on live WP install)
+- [ ] Activate plugin — verify `confirmed`, `packed`, `shipped` appear in order status dropdown
+- [ ] Move test order: pending → confirmed → packed → shipped → completed
+  - [ ] `_ts_confirmed`, `_ts_packed`, `_ts_shipped`, `_ts_delivered` timestamps recorded in order meta
+  - [ ] Admin badge colors change at each step
+  - [ ] Tracking column shows courier + tracking # once entered
+  - [ ] /track-order timeline reflects each step live
+- [ ] Shipment tracking meta box: enter courier + tracking number → URL auto-built → click "Mark as Shipped" → order transitions + email sends
+- [ ] Shipped email: arrives, shows tracking card + wine CTA button; tracking link opens courier site
+- [ ] Gift order: tracking page shows items without prices when `_hide_prices=1`
+- [ ] Wrong phone + real order number → generic "couldn't find" error (no info leak)
+- [ ] Rate limit: 6th request within 60s → "Too many requests" error
+- [ ] WC REST response for order: billing/payment fields NOT included in `TrackOrderResult` (stays server-side)
+- [ ] Cancelled order: /track-order shows the banner, not the timeline
+
+### Next
+**Phase 8: Customer Account + Auth**
+
+---
+
+## Header Redesign + 11 Footer Content Pages
+
+### Status: COMPLETE ✓ (QA passed 2026-06-12)
+
+### Built
+
+**Header / Navigation**
+- `components/layout/Header.tsx` — full rewrite: sticky `position: sticky top-0 z-40`, scroll shadow, desktop mega menu (`absolute inset-x-0 top-full` with 2px wine accent bar, "Browse" left column + auto-split child columns), mobile full-height drawer with own header bar + bottom icon strip (Search/Account/Wishlist/Cart)
+- `lib/config/nav.ts` — single-source nav config: `NAV_ITEMS` (mock mode), `FIXED_NAV_BEFORE`/`FIXED_NAV_AFTER` (production WC mode); user edits this file to add/remove/reorder nav items
+- `lib/woo/rest-client.ts` — added `fetchWooNavCategories()`: fetches live WC categories, groups by parent, returns nav-ready array with real slugs (fixes Kids → 404 bug)
+- `app/layout.tsx` — fetches WC nav categories server-side when `WOO_REST_ENABLED`; merges into nav array; falls back to `NAV_ITEMS` in mock mode
+
+**Bug fixes**
+- QuickView close button: moved to last DOM child to avoid stacking context paint-over from scrollable right panel
+- Mega menu hover flicker: moved `onMouseLeave` to `<header>` element (not individual button) so mouse can travel to panel
+- Kids category 404: nav now built from live WC slugs, not hardcoded assumptions
+- Mobile product grid: `grid-cols-1` on all small breakpoints across all 3 column modes
+- Mobile product card: hover overlay hidden on mobile (`hidden sm:flex`); explicit "Add to Cart" button shown below product info on mobile
+
+**11 Footer Content Pages**
+
+Infrastructure:
+- `lib/wp/queries/pages.ts` — `GET_WP_PAGE`, `GET_FAQ_PAGE`, `GET_CAREERS_PAGE`, `GET_BLOG_POSTS`, `GET_BLOG_POST`, `GET_BLOG_SLUGS` + TypeScript interfaces
+- `lib/content/size-charts.ts` — `WOMEN_SIZES`, `MEN_SIZES`, `KIDS_SIZES` with fabric guides
+- `lib/seo/schema.ts` — added `faqPageSchema()`, `localBusinessSchema()`, `articleSchema()`
+- `lib/utils/rate-limit.ts` — in-memory Map rate limiter with TTL
+- `components/layout/ContentPageLayout.tsx` — shared server layout: breadcrumbs + RibbonHeading H1 + intro
+- `components/ui/Callout.tsx` — `info` / `warning` variants
+- `components/content/ProseContent.tsx` — WP HTML with Tailwind arbitrary variant styling
+- `lib/wp/fixtures/index.ts` — added fixtures for `GetWpPage`, `GetFaqPage`, `GetCareersPage`, `GetBlogPosts`, `GetBlogPost`, `GetBlogSlugs`
+
+Routes (all have: `generateMetadata`, canonical, BreadcrumbList JSON-LD, one H1, cream bg, breadcrumbs):
+- `app/track-order/` — form + `TrackOrderClient` + `OrderTimeline` (5-step, pulse on current, wine fill); server action: rate-limited 5/min, requires BOTH order number AND billing phone, `_hide_prices` meta respected; mock: order 1001 + phone ending 3001234567
+- `app/contact/` — contact info card + `ContactForm` with honeypot field; server action: honeypot silently succeeds, rate-limited 3/min; `LocalBusiness` JSON-LD
+- `app/faqs/` — `FaqsClient` accordion; `FAQPage` JSON-LD
+- `app/size-guide/` — 3-tab table (Women/Men/Kids) from `size-charts.ts`
+- `app/shipping-policy/` — WP content via `GET_WP_PAGE`
+- `app/returns/` — WP content via `GET_WP_PAGE`
+- `app/about/` — WP content + Why MYGIFT feature cards + CTAs; sr-only H1
+- `app/blog/` — `PostCard` grid; handles empty state gracefully
+- `app/blog/[slug]/` — `generateStaticParams`; `Article` JSON-LD; in-page TOC via `IntersectionObserver`
+- `app/careers/` — job listings from `GetCareersPage`; empty state when no listings
+- `app/privacy-policy/` — WP content via `GET_WP_PAGE`
+- `app/terms/` — WP content via `GET_WP_PAGE`
+
+**Sitemap**: all 11 new routes added with appropriate priorities
+**Footer**: "Track Your Order →" prominent CTA added above bottom bar
+**Fixtures fix**: `/shipping` → `/shipping-policy`; `/privacy` → `/privacy-policy`
+
+### QA results (2026-06-12)
+- [x] `pnpm typecheck` — zero errors
+- [x] All 11 routes exist (verified via glob)
+- [x] All 12 pages (11 + blog/[slug]) have `application/ld+json` JSON-LD
+- [x] BreadcrumbList present on all pages (via `ContentPageLayout` or direct injection)
+- [x] One H1 per page (via `ContentPageLayout` or per-page `RibbonHeading as="h1"`)
+- [x] Security: no WP admin URLs in client code; no secrets in client bundles
+- [x] Hardcoded hex: only in OG image route, styleguide token display, and gift ribbon palette data (all permitted)
+- [x] Contact honeypot present + server action silently succeeds on bot submission
+- [x] Track order: requires both order number AND phone; rate-limited 5/min
+- [x] Dead footer links fixed: `/shipping-policy` and `/privacy-policy` in fixtures
+- [x] Sitemap includes all 11 new pages
+
+### Next
+**Phase 8: Customer Account + Auth**
+
+---
+
 ## Phase 7 — SEO Foundation
 
 ### Status: COMPLETE ✓ (QA passed 2026-06-12)
@@ -284,4 +466,4 @@ Next.js 16.2.9, Tailwind v4, monorepo scaffold, WP plugin stub. See prior sessio
 ## Next: Phase 4 — Cart, Checkout, WooCommerce Integration
 
 ---
-_Updated: 2026-06-11_
+_Updated: 2026-06-12_

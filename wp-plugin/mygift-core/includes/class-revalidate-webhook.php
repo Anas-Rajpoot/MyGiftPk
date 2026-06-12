@@ -1,100 +1,131 @@
 <?php
 /**
- * Fires a POST to Next.js /api/revalidate after relevant content changes.
+ * Fires a non-blocking POST to the Next.js /api/revalidate endpoint whenever
+ * relevant content changes in WordPress or WooCommerce.
  *
- * Tag mapping:
- *   product save/update  → product:{slug}  + category tags for its categories
- *   homepage/ACF options → home, global
- *   gift-builder options → gift-builder
- *   page/post            → page:{slug} / post:{slug}
+ * Tag mapping (mirrors apps/web/lib/wp/client.ts — keep in sync):
+ *
+ *   product save / stock change  → product:{slug}  + category:{slug} for each category
+ *   page save                    → page:{slug}
+ *   blog post save               → post:{slug}
+ *   ACF options: homepage        → home, global
+ *   ACF options: global-options  → global
+ *   ACF options: gift-builder    → gift-builder
  */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class MYGIFT_Revalidate_Webhook {
 
-    public static function init() {
-        add_action( 'save_post_product', [ __CLASS__, 'on_product_save' ], 10, 2 );
-        add_action( 'save_post_page',    [ __CLASS__, 'on_page_save' ],    10, 2 );
-        add_action( 'save_post_post',    [ __CLASS__, 'on_post_save' ],    10, 2 );
+	public static function init() {
+		add_action( 'save_post_product',           array( __CLASS__, 'on_product_save'  ), 10, 2 );
+		add_action( 'save_post_page',              array( __CLASS__, 'on_page_save'     ), 10, 2 );
+		add_action( 'save_post_post',              array( __CLASS__, 'on_post_save'     ), 10, 2 );
+		add_action( 'acf/save_post',               array( __CLASS__, 'on_acf_save'      ), 20    );
+		add_action( 'woocommerce_reduce_order_stock', array( __CLASS__, 'on_stock_change' )       );
+	}
 
-        // ACF options pages
-        add_action( 'acf/save_post', [ __CLASS__, 'on_acf_save' ], 20 );
+	// ── Handlers ──────────────────────────────────────────────────────────────
 
-        // WooCommerce product stock changes (e.g. order reduces stock)
-        add_action( 'woocommerce_reduce_order_stock', [ __CLASS__, 'on_stock_change' ] );
-    }
+	public static function on_product_save( $post_id, $post ) {
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
 
-    public static function on_product_save( int $post_id, WP_Post $post ) {
-        if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
+		$slug = $post->post_name;
+		$tags = array( "product:{$slug}" );
 
-        $slug  = $post->post_name;
-        $tags  = [ "product:{$slug}" ];
+		$cats = get_the_terms( $post_id, 'product_cat' );
+		if ( $cats && ! is_wp_error( $cats ) ) {
+			foreach ( $cats as $cat ) {
+				$tags[] = "category:{$cat->slug}";
+			}
+		}
 
-        // Also invalidate each category this product belongs to
-        $cats = get_the_terms( $post_id, 'product_cat' );
-        if ( $cats && ! is_wp_error( $cats ) ) {
-            foreach ( $cats as $cat ) {
-                $tags[] = "category:{$cat->slug}";
-            }
-        }
+		self::fire( $tags );
+	}
 
-        self::fire( $tags );
-    }
+	public static function on_page_save( $post_id, $post ) {
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+		self::fire( array( "page:{$post->post_name}" ) );
+	}
 
-    public static function on_page_save( int $post_id, WP_Post $post ) {
-        if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
-        self::fire( [ "page:{$post->post_name}" ] );
-    }
+	public static function on_post_save( $post_id, $post ) {
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+		self::fire( array( "post:{$post->post_name}" ) );
+	}
 
-    public static function on_post_save( int $post_id, WP_Post $post ) {
-        if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
-        self::fire( [ "post:{$post->post_name}" ] );
-    }
+	/**
+	 * ACF options pages save with a string $post_id like 'options' or the menu slug.
+	 * NOTE: strpos() used instead of str_contains() for PHP 7.4 compatibility.
+	 *
+	 * @param int|string $post_id
+	 */
+	public static function on_acf_save( $post_id ) {
+		if ( ! is_string( $post_id ) ) {
+			return;
+		}
 
-    public static function on_acf_save( $post_id ) {
-        // ACF options pages save with a string post_id like 'options' or the menu slug
-        if ( ! is_string( $post_id ) ) return;
+		if ( false !== strpos( $post_id, 'homepage' ) ) {
+			self::fire( array( 'home', 'global' ) );
+		} elseif ( false !== strpos( $post_id, 'gift-builder' ) ) {
+			self::fire( array( 'gift-builder' ) );
+		} elseif ( false !== strpos( $post_id, 'global' ) || 'options' === $post_id ) {
+			self::fire( array( 'global' ) );
+		}
+	}
 
-        if ( str_contains( $post_id, 'homepage' ) ) {
-            self::fire( [ 'home', 'global' ] );
-        } elseif ( str_contains( $post_id, 'global' ) ) {
-            self::fire( [ 'global' ] );
-        } elseif ( str_contains( $post_id, 'gift-builder' ) ) {
-            self::fire( [ 'gift-builder' ] );
-        } else {
-            // Unknown options page — invalidate global as a safe default
-            self::fire( [ 'global' ] );
-        }
-    }
+	public static function on_stock_change( $order ) {
+		foreach ( $order->get_items() as $item ) {
+			$product = $item->get_product();
+			if ( $product ) {
+				$slug   = get_post_field( 'post_name', $product->get_id() );
+				self::fire( array( "product:{$slug}" ) );
+			}
+		}
+	}
 
-    public static function on_stock_change( $order ) {
-        foreach ( $order->get_items() as $item ) {
-            $product = $item->get_product();
-            if ( $product ) {
-                $slug  = get_post_field( 'post_name', $product->get_id() );
-                self::fire( [ "product:{$slug}" ] );
-            }
-        }
-    }
+	// ── Core dispatcher ───────────────────────────────────────────────────────
 
-    /**
-     * Send revalidation request to Next.js.
-     *
-     * @param string[] $tags
-     */
-    private static function fire( array $tags ): void {
-        $opts   = MYGIFT_Settings::get();
-        $secret = $opts['revalidate_secret'];
-        $url    = trailingslashit( $opts['nextjs_url'] ) . 'api/revalidate';
+	/**
+	 * Send a fire-and-forget revalidation request to Next.js.
+	 *
+	 * @param string[] $tags  Cache tags to invalidate.
+	 */
+	private static function fire( array $tags ) {
+		$opts   = MYGIFT_Settings::get();
+		$secret = $opts['revalidate_secret'];
+		$url    = $opts['nextjs_url'];
 
-        if ( empty( $secret ) || empty( $opts['nextjs_url'] ) ) return;
+		if ( empty( $secret ) || empty( $url ) ) {
+			return;
+		}
 
-        $tags = array_values( array_unique( $tags ) );
+		$tags      = array_values( array_unique( array_filter( $tags ) ) );
+		$endpoint  = trailingslashit( $url ) . 'api/revalidate';
+		$timestamp = (int) ( microtime( true ) * 1000 ); // milliseconds
 
-        wp_remote_post( $url, [
-            'timeout'     => 5,
-            'blocking'    => false, // fire-and-forget
-            'headers'     => [ 'Content-Type' => 'application/json' ],
-            'body'        => wp_json_encode( [ 'secret' => $secret, 'tags' => $tags ] ),
-            'data_format' => 'body',
-        ] );
-    }
+		wp_remote_post(
+			$endpoint,
+			array(
+				'timeout'     => 5,
+				'blocking'    => false, // fire-and-forget — do not wait for response
+				'headers'     => array( 'Content-Type' => 'application/json' ),
+				'body'        => wp_json_encode(
+					array(
+						'secret'    => $secret,
+						'tags'      => $tags,
+						'timestamp' => $timestamp,
+					)
+				),
+				'data_format' => 'body',
+			)
+		);
+	}
 }
