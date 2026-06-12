@@ -19,7 +19,7 @@ export function OccasionChips({ chips }: { chips: OccasionChip[] }) {
           {chips.map((chip) => (
             <Link
               key={chip.slug}
-              href={`/gifts/${chip.slug}`}
+              href={`/category/${chip.slug}`}
               role="listitem"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-chip border border-hairline bg-ivory font-body text-sm font-medium text-ink hover:border-wine hover:bg-wine-tint hover:text-wine transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine focus-visible:ring-offset-2"
             >

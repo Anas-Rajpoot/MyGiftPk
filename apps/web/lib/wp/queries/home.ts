@@ -42,7 +42,6 @@ export const GET_HOME_PAGE = `
             chips {
               label
               slug
-              emoji
             }
           }
           ... on Page_Homepagebuilder_Blocks_FromAbroadBlock {
