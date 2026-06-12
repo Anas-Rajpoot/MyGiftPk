@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { storeGetCart, storeClearCart } from '@/lib/woo/store-cart'
 import { storeCheckout, type CheckoutPayload } from '@/lib/woo/checkout'
 import { getCartToken, cartResponse } from '@/lib/cart/route-helpers'
+import { validateOrigin } from '@/lib/utils/csrf'
 
 interface CheckoutBody {
   billing: {
@@ -33,6 +34,10 @@ interface CheckoutBody {
 }
 
 export async function POST(req: NextRequest) {
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   let body: CheckoutBody
   try {
     body = await req.json()

@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MOCK_MODE } from '@/lib/cart/route-helpers'
+import { validateOrigin } from '@/lib/utils/csrf'
 import type { GiftBuilderOptions } from '@/lib/wp/queries/gift'
 import type { CartData, CartLineItem } from '@/lib/cart/normalize'
+
+function sanitizeGiftMessage(input: string, maxLen = 200): string {
+  return (input ?? '')
+    .replace(/&[a-z#0-9]{1,8};/gi, ' ') // flatten HTML entities before stripping tags
+    .replace(/<[^>]*>/g, '')             // strip HTML tags
+    .replace(/[\x00-\x1F\x7F]/g, ' ')   // strip control characters
+    .replace(/\s+/g, ' ')                // normalise whitespace
+    .trim()
+    .slice(0, maxLen)
+}
 
 // Fixture lookup at build time — safe because this is server-only
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -23,6 +34,10 @@ function getMockOptions(): GiftBuilderOptions | null {
 }
 
 export async function POST(req: NextRequest) {
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   let body: GiftPayload
   try {
     body = await req.json()
@@ -44,10 +59,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const cleanMessage = (message ?? '')
-    .replace(/<[^>]*>/g, '')
-    .trim()
-    .slice(0, 200)
+  const cleanMessage = sanitizeGiftMessage(message ?? '')
 
   if (MOCK_MODE) {
     const opts = getMockOptions()

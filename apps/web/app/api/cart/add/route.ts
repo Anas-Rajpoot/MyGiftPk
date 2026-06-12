@@ -15,6 +15,7 @@ import {
   MOCK_MODE,
   WOO_REST_ENABLED,
 } from '@/lib/cart/route-helpers'
+import { validateOrigin } from '@/lib/utils/csrf'
 
 interface AddPayload {
   productId: number
@@ -24,6 +25,8 @@ interface AddPayload {
 }
 
 export async function POST(req: NextRequest) {
+  if (!validateOrigin(req)) return errorResponse('Forbidden', 403)
+
   if (MOCK_MODE && !WOO_REST_ENABLED) return cartResponse(MOCK_CART)
 
   let body: AddPayload

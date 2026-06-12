@@ -3,8 +3,10 @@ import { Bebas_Neue, Poppins } from 'next/font/google'
 import './globals.css'
 import { fetchGraphQL } from '@/lib/wp/client'
 import { GET_GLOBAL_OPTIONS } from '@/lib/wp/queries/global'
-import type { GlobalOptionsResponse } from '@/lib/wp/queries/global'
-import { organizationSchema, webSiteSchema } from '@/lib/seo/schema'
+import type { GlobalOptionsResponse, NavItem } from '@/lib/wp/queries/global'
+import { WOO_REST_ENABLED, fetchWooNavCategories } from '@/lib/woo/rest-client'
+import { NAV_ITEMS, FIXED_NAV_BEFORE, FIXED_NAV_AFTER } from '@/lib/config/nav'
+import { organizationSchema, webSiteSchema, localBusinessSchema } from '@/lib/seo/schema'
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -42,15 +44,20 @@ export default async function RootLayout({
   children: React.ReactNode
   modal?: React.ReactNode
 }>) {
-  const globalData = await fetchGraphQL<GlobalOptionsResponse>(
-    GET_GLOBAL_OPTIONS,
-    {},
-    { tags: ['global'], revalidate: 3600 }
-  )
+  const [globalData, wooNav] = await Promise.all([
+    fetchGraphQL<GlobalOptionsResponse>(GET_GLOBAL_OPTIONS, {}, { tags: ['global'], revalidate: 3600 }),
+    WOO_REST_ENABLED ? fetchWooNavCategories() : Promise.resolve(null),
+  ])
   const opts = globalData.globalOptions
+
+  // Build nav: live WC categories when REST is enabled, otherwise lib/config/nav.ts
+  const navItems: NavItem[] = wooNav
+    ? [...FIXED_NAV_BEFORE, ...wooNav, ...FIXED_NAV_AFTER]
+    : NAV_ITEMS
 
   const orgSchema = organizationSchema(opts?.footer?.socials)
   const siteSchema = webSiteSchema()
+  const bizSchema = localBusinessSchema(opts?.footer?.contact ?? {})
 
   return (
     <html lang="en" className={`${poppins.variable} ${bebasNeue.variable}`}>
@@ -63,12 +70,16 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteSchema) }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(bizSchema) }}
+        />
       </head>
       <body className="min-h-screen flex flex-col bg-cream text-ink antialiased" suppressHydrationWarning>
         {opts?.announcementBar?.enabled && (
           <AnnouncementBar data={opts.announcementBar} />
         )}
-        <Header navItems={opts?.headerMenu ?? []} />
+        <Header navItems={navItems} />
         <CartDrawer />
         <main className="flex-1">
           {children}

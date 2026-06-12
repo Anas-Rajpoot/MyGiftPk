@@ -1,8 +1,10 @@
 import { revalidateTag } from 'next/cache'
 import { NextRequest } from 'next/server'
 
+const FIVE_MINUTES = 5 * 60 * 1000
+
 export async function POST(request: NextRequest) {
-  let body: { secret?: string; tags?: string[] }
+  let body: { secret?: string; tags?: string[]; timestamp?: number }
 
   try {
     body = await request.json()
@@ -12,6 +14,13 @@ export async function POST(request: NextRequest) {
 
   if (!body.secret || body.secret !== process.env.REVALIDATE_SECRET) {
     return Response.json({ error: 'Invalid secret' }, { status: 401 })
+  }
+
+  // Optional replay-attack guard: reject if timestamp is older than 5 minutes
+  if (typeof body.timestamp === 'number') {
+    if (Math.abs(Date.now() - body.timestamp) > FIVE_MINUTES) {
+      return Response.json({ error: 'Request expired' }, { status: 401 })
+    }
   }
 
   const tags = Array.isArray(body.tags) ? body.tags : []
