@@ -1,5 +1,30 @@
 # PROGRESS.md — MYGIFT Session Log
 
+## Phase 7 — SEO Foundation
+
+### Status: COMPLETE ✓ (QA passed 2026-06-12)
+
+### Built
+- `app/robots.txt` — disallows /api/, /cart, /checkout, /wishlist, /order-confirmation, /account/, /styleguide; sitemap reference
+- `app/sitemap.xml` — dynamic ISR (1h/1y), 72 URLs: 4 static + 12 WooCommerce categories + 56 products; safe fallback when WC unreachable
+- `app/api/og/route.tsx` — 1200×630 OG image: cream bg, wine brand mark + ribbon accent, uppercase title, stone subtext; no external dependencies
+- `app/shop/page.tsx` — canonical, openGraph, BreadcrumbList JSON-LD; BASE name conflict resolved
+- `app/gifts/page.tsx` — canonical + openGraph with /api/og fallback
+- `app/gift-builder/page.tsx` — canonical + openGraph with /api/og fallback
+- `app/product/[slug]/page.tsx` — canonical always from NEXT_PUBLIC_SITE_URL (not Yoast backend); twitter card; OG fallback
+- `app/category/[slug]/page.tsx` — same; generateStaticParams try-catch for resilience
+- `app/page.tsx` — `title.absolute` prevents template duplication
+
+### QA bugs caught and fixed
+1. Canonical pointed to WP backend (`anas.inflowcommerce.com`) from Yoast — always compute from NEXT_PUBLIC_SITE_URL
+2. Home page title duplicated brand name via template — fixed with `title.absolute`
+3. OG `img` param crashed on external WebP — unused feature removed
+
+### Next
+**Phase 8: Customer Account + Auth**
+
+---
+
 ## Phase 6 — Gift Builder
 
 ### Status: COMPLETE ✓
