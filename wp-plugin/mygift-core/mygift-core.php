@@ -72,10 +72,12 @@ function mygift_core_init() {
 
 	// Feature classes that have no strict WC class-hierarchy dependency.
 	require_once MYGIFT_CORE_DIR . 'includes/class-revalidate-webhook.php';
+	require_once MYGIFT_CORE_DIR . 'includes/class-home-content.php';
 	require_once MYGIFT_CORE_DIR . 'includes/class-order-statuses.php';
 	require_once MYGIFT_CORE_DIR . 'includes/class-status-timestamps.php';
 
 	MYGIFT_Revalidate_Webhook::init();
+	MYGIFT_Home_Content::init();
 	MYGIFT_Order_Statuses::init();
 	MYGIFT_Status_Timestamps::init();
 

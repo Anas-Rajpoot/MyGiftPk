@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Gift, Package, Smile } from 'lucide-react'
 import { RibbonHeading } from '@/components/ui/RibbonHeading'
+import type { GiftBannerContent } from '@/lib/wp/home-content'
 
 const steps = [
   { Icon: Package, label: 'Choose a box', number: '01' },
@@ -8,7 +9,15 @@ const steps = [
   { Icon: Smile, label: 'Add your message', number: '03' },
 ]
 
-export function GiftBanner() {
+const DEFAULTS: GiftBannerContent = {
+  heading: "BUILD A GIFT THEY'LL NEVER FORGET",
+  subtext: 'Choose a box, fill it with your favourite treats and clothing, add a personal message — we deliver anywhere in Pakistan.',
+  ctaLabel: 'Start Building',
+  ctaLink: '/gift-builder',
+}
+
+export function GiftBanner({ content }: { content?: GiftBannerContent | null }) {
+  const { heading, subtext, ctaLabel, ctaLink } = content ?? DEFAULTS
   return (
     <section
       aria-labelledby="gift-banner-heading"
@@ -22,12 +31,11 @@ export function GiftBanner() {
           gold
           className="text-4xl sm:text-6xl"
         >
-          BUILD A GIFT THEY&apos;LL NEVER FORGET
+          {heading}
         </RibbonHeading>
 
         <p className="mt-6 font-body text-ivory/80 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
-          Choose a box, fill it with your favourite treats and clothing, add a personal message —
-          we deliver anywhere in Pakistan.
+          {subtext}
         </p>
 
         {/* 3-step mini-graphic */}
@@ -50,10 +58,10 @@ export function GiftBanner() {
 
         <div className="mt-10">
           <Link
-            href="/gift-builder"
+            href={ctaLink}
             className="inline-flex items-center h-12 px-8 bg-gold text-ink rounded-input font-body font-semibold text-[15px] tracking-wide hover:bg-gold/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-wine"
           >
-            Start Building →
+            {ctaLabel} →
           </Link>
         </div>
       </div>

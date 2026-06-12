@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { fetchGraphQL } from '@/lib/wp/client'
 import { GET_HOME_PAGE } from '@/lib/wp/queries/home'
 import type { HomePageData } from '@/lib/wp/queries/home'
+import { fetchHomeContent } from '@/lib/wp/home-content'
 import { HomeBlockRenderer } from '@/components/home/HomeBlockRenderer'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
@@ -41,13 +42,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const data = await fetchGraphQL<HomePageData>(
-    GET_HOME_PAGE,
-    {},
-    { tags: ['home', 'global'], revalidate: 3600 }
-  )
+  const [data, homeContent] = await Promise.all([
+    fetchGraphQL<HomePageData>(GET_HOME_PAGE, {}, { tags: ['home', 'global'], revalidate: 3600 }),
+    fetchHomeContent(),
+  ])
 
   const blocks = data.page?.homepageBuilder?.blocks ?? []
 
-  return <HomeBlockRenderer blocks={blocks} />
+  return <HomeBlockRenderer blocks={blocks} homeContent={homeContent} />
 }

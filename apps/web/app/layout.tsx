@@ -7,6 +7,7 @@ import type { GlobalOptionsResponse, NavItem } from '@/lib/wp/queries/global'
 import { WOO_REST_ENABLED, fetchWooNavCategories } from '@/lib/woo/rest-client'
 import { NAV_ITEMS, FIXED_NAV_BEFORE, FIXED_NAV_AFTER } from '@/lib/config/nav'
 import { organizationSchema, webSiteSchema, localBusinessSchema } from '@/lib/seo/schema'
+import { fetchHomeContent } from '@/lib/wp/home-content'
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -44,11 +45,14 @@ export default async function RootLayout({
   children: React.ReactNode
   modal?: React.ReactNode
 }>) {
-  const [globalData, wooNav] = await Promise.all([
+  const [globalData, wooNav, homeContent] = await Promise.all([
     fetchGraphQL<GlobalOptionsResponse>(GET_GLOBAL_OPTIONS, {}, { tags: ['global'], revalidate: 3600 }),
     WOO_REST_ENABLED ? fetchWooNavCategories() : Promise.resolve(null),
+    fetchHomeContent(),
   ])
   const opts = globalData.globalOptions
+  // Live WP REST data takes priority over GraphQL fixture for announcement bar
+  const announcementBar = homeContent?.announcementBar ?? opts?.announcementBar
 
   // Build nav: live WC categories when REST is enabled, otherwise lib/config/nav.ts
   const navItems: NavItem[] = wooNav
@@ -76,8 +80,8 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-cream text-ink antialiased" suppressHydrationWarning>
-        {opts?.announcementBar?.enabled && (
-          <AnnouncementBar data={opts.announcementBar} />
+        {announcementBar?.enabled && (
+          <AnnouncementBar data={announcementBar} />
         )}
         <Header navItems={navItems} />
         <CartDrawer />

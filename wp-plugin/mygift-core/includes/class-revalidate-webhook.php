@@ -94,6 +94,15 @@ class MYGIFT_Revalidate_Webhook {
 	// ── Core dispatcher ───────────────────────────────────────────────────────
 
 	/**
+	 * Public alias so other classes (e.g. MYGIFT_Home_Content) can trigger revalidation.
+	 *
+	 * @param string[] $tags
+	 */
+	public static function fire_tags( array $tags ) {
+		self::fire( $tags );
+	}
+
+	/**
 	 * Send a fire-and-forget revalidation request to Next.js.
 	 *
 	 * @param string[] $tags  Cache tags to invalidate.
