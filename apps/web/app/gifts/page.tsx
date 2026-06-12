@@ -1,13 +1,15 @@
+import React from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Gift } from 'lucide-react'
+import { Gift, Heart, Star, Sparkles, Coffee, ShoppingBag, Cake, Moon, Flower2, GraduationCap, PartyPopper } from 'lucide-react'
 import { RibbonHeading } from '@/components/ui/RibbonHeading'
 import {
   fetchWooAllCategories,
   WOO_REST_ENABLED,
   type WooCategoryCard,
 } from '@/lib/woo/rest-client'
+import type { LucideIcon } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Gifts — MYGIFT',
@@ -24,24 +26,30 @@ const MOCK_GIFT_CATEGORIES: WooCategoryCard[] = [
   { id: '16', slug: 'accessories', name: 'Accessories', count: 4, image: null },
 ]
 
-// Emoji placeholders keyed by slug fragment
-const CATEGORY_EMOJI: Record<string, string> = {
-  birthday: '🎂',
-  anniversary: '💍',
-  chocolates: '🍫',
-  'combos-gift': '🎁',
-  custom: '✨',
-  accessories: '🎀',
-  wedding: '💐',
-  eid: '🌙',
-  default: '🎁',
+// SVG icon map keyed by slug fragment
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  birthday: Cake,
+  anniversary: Heart,
+  chocolates: Coffee,
+  'combos-gift': Gift,
+  combo: Gift,
+  custom: Sparkles,
+  eid: Moon,
+  wedding: Flower2,
+  mothers: Flower2,
+  graduation: GraduationCap,
+  party: PartyPopper,
+  accessories: ShoppingBag,
+  women: ShoppingBag,
+  men: ShoppingBag,
+  kids: Star,
 }
 
-function getCategoryEmoji(slug: string): string {
-  for (const [key, emoji] of Object.entries(CATEGORY_EMOJI)) {
-    if (slug.includes(key)) return emoji
+function getCategoryIcon(slug: string): LucideIcon {
+  for (const [key, icon] of Object.entries(CATEGORY_ICONS)) {
+    if (slug.includes(key)) return icon
   }
-  return CATEGORY_EMOJI.default
+  return Gift
 }
 
 interface CategoryCardProps {
@@ -49,7 +57,6 @@ interface CategoryCardProps {
 }
 
 function CategoryCard({ cat }: CategoryCardProps) {
-  const emoji = getCategoryEmoji(cat.slug)
   const hasRealImage = cat.image?.sourceUrl && !cat.image.sourceUrl.startsWith('/placeholder')
 
   return (
@@ -67,11 +74,12 @@ function CategoryCard({ cat }: CategoryCardProps) {
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <span className="text-5xl sm:text-6xl select-none" aria-hidden>
-              {emoji}
-            </span>
-            <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-gold/20 to-transparent" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            {React.createElement(getCategoryIcon(cat.slug), {
+              className: 'h-14 w-14 text-gold/40 transition-colors group-hover:text-gold/60',
+              'aria-hidden': true,
+            })}
+            <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-gold/10 to-transparent" />
           </div>
         )}
         {/* Overlay */}

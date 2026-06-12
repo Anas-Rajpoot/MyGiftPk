@@ -118,7 +118,7 @@ export function Footer({ data }: { data: FooterData }) {
         <div className="mt-14 pt-6 border-t border-ivory/10 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="font-body text-xs text-ivory/40">{data.bottomText}</p>
           <p className="font-body text-xs text-ivory/40">
-            Made with care for Pakistan 🇵🇰
+            Made with care for Pakistan
           </p>
         </div>
       </div>

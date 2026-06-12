@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { clsx } from 'clsx'
-import { Plus, Minus, X, Package } from 'lucide-react'
+import { Plus, Minus, X, Package, Coffee, Heart, Cookie, Sparkles } from 'lucide-react'
 import { useGiftStore, selectSlotsUsed } from '@/lib/stores/gift'
 import type { GiftComponent } from '@/lib/wp/queries/gift'
 
@@ -119,10 +119,11 @@ export function StepFill({ components, categories }: StepFillProps) {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={imgSrc} alt={comp.name} className="object-cover w-full h-full" />
                 ) : (
-                  <span className="font-display text-3xl text-hairline select-none" aria-hidden>
-                    {comp.category === 'Chocolates' ? '🍫' :
-                     comp.category === 'Candies' ? '🍬' :
-                     comp.category === 'Biscuits' ? '🍪' : '🎁'}
+                  <span className="text-hairline" aria-hidden>
+                    {comp.category === 'Chocolates' ? <Coffee className="h-12 w-12" /> :
+                     comp.category === 'Candies' ? <Heart className="h-12 w-12" /> :
+                     comp.category === 'Biscuits' ? <Cookie className="h-12 w-12" /> :
+                     <Sparkles className="h-12 w-12" />}
                   </span>
                 )}
                 {addedItem && (

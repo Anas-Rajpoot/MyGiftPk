@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 import { Gift, MessageSquare, Ribbon, Tag, ShoppingBag, AlertCircle } from 'lucide-react'
 import { useGiftStore, selectDisplayTotal } from '@/lib/stores/gift'
 import { useCartStore } from '@/lib/stores/cart'
+import type { CartData } from '@/lib/cart/normalize'
 
 interface StepReviewProps {
   onSuccess: () => void
@@ -58,9 +59,19 @@ export function StepReview({ onSuccess }: StepReviewProps) {
         return
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const cart = await res.json() as any
-      setCart(cart)
+      const bundleData = await res.json() as CartData
+      // Merge the bundle item into the current cart rather than replacing it
+      const currentCart = useCartStore.getState().cart
+      if (currentCart && bundleData.items.length > 0) {
+        const mergedItems = [...currentCart.items, ...bundleData.items]
+        setCart({
+          ...currentCart,
+          items: mergedItems,
+          itemCount: mergedItems.reduce((s, i) => s + i.quantity, 0),
+        })
+      } else {
+        setCart(bundleData)
+      }
       openCart()
       reset()
       onSuccess()

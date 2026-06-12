@@ -23,7 +23,6 @@ export function OccasionChips({ chips }: { chips: OccasionChip[] }) {
               role="listitem"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-chip border border-hairline bg-ivory font-body text-sm font-medium text-ink hover:border-wine hover:bg-wine-tint hover:text-wine transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine focus-visible:ring-offset-2"
             >
-              <span aria-hidden>{chip.emoji}</span>
               {chip.label}
             </Link>
           ))}

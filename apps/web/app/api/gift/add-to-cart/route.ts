@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { MOCK_MODE } from '@/lib/cart/route-helpers'
 import type { GiftBuilderOptions } from '@/lib/wp/queries/gift'
 import type { CartData, CartLineItem } from '@/lib/cart/normalize'
-import { MOCK_CART } from '@/lib/cart/mock'
 
 // Fixture lookup at build time — safe because this is server-only
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -110,13 +109,19 @@ export async function POST(req: NextRequest) {
       lineTotal: `Rs. ${serverTotal.toLocaleString('en-PK')}`,
     }
 
-    const updatedCart: CartData = {
-      ...MOCK_CART,
-      items: [...MOCK_CART.items, bundleItem],
-      itemCount: MOCK_CART.itemCount + 1,
+    const bundleCart: CartData = {
+      items: [bundleItem],
+      subtotal: `Rs. ${serverTotal.toLocaleString('en-PK')}`,
+      total: `Rs. ${serverTotal.toLocaleString('en-PK')}`,
+      itemCount: 1,
+      discounts: [],
+      freeShippingThreshold: 3000,
+      freeShippingRemaining: Math.max(0, 3000 - serverTotal),
+      giftWrapEnabled: false,
+      giftWrapCost: 'Rs. 150',
     }
 
-    return NextResponse.json(updatedCart)
+    return NextResponse.json(bundleCart)
   }
 
   // Real mode: requires WP plugin (mygift-core) with gift bundle container product.

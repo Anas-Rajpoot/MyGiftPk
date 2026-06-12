@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Plus } from 'lucide-react'
+import { Plus, Gift } from 'lucide-react'
 import { useCartStore } from '@/lib/stores/cart'
 import { addToCart } from '@/lib/cart/client'
 import { useToastStore } from '@/lib/toast'
@@ -31,7 +31,7 @@ export function CrossSellRail() {
   return (
     <div className="px-5 py-4 border-t border-hairline">
       <p className="font-body text-xs uppercase tracking-widest text-stone mb-3">
-        Add a little extra 🎁
+        <Gift className="inline-block h-3.5 w-3.5 mr-1 align-middle" aria-hidden />Add a little extra
       </p>
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
         {CROSS_SELL_ITEMS.map((item) => (

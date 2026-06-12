@@ -95,7 +95,6 @@ export interface FeaturedTab {
 export interface OccasionChip {
   label: string
   slug: string
-  emoji: string
 }
 
 export interface TrustItem {

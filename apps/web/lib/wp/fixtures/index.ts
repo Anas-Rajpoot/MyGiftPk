@@ -49,7 +49,7 @@ export const fixtures: Record<string, unknown> = {
     globalOptions: {
       announcementBar: {
         enabled: true,
-        text: 'Free shipping on orders over Rs. 3,000 · Nationwide delivery 🇵🇰',
+        text: 'Free shipping on orders over Rs. 3,000 · Nationwide delivery',
         link: '/shop',
       },
       freeShippingThreshold: 3000,
@@ -214,14 +214,14 @@ export const fixtures: Record<string, unknown> = {
           {
             fieldGroupName: 'occasion_chips',
             chips: [
-              { label: 'Birthday', slug: 'birthday', emoji: '🎂' },
-              { label: 'Anniversary', slug: 'anniversary', emoji: '💍' },
-              { label: 'Eid', slug: 'eid', emoji: '🌙' },
-              { label: 'Wedding', slug: 'wedding', emoji: '💐' },
-              { label: 'Baby Shower', slug: 'baby-shower', emoji: '👶' },
-              { label: 'Graduation', slug: 'graduation', emoji: '🎓' },
-              { label: 'Mother\'s Day', slug: 'mothers-day', emoji: '🌸' },
-              { label: 'Father\'s Day', slug: 'fathers-day', emoji: '👔' },
+              { label: 'Birthday', slug: 'birthday' },
+              { label: 'Anniversary', slug: 'anniversary' },
+              { label: 'Eid', slug: 'eid' },
+              { label: 'Wedding', slug: 'wedding' },
+              { label: 'Baby Shower', slug: 'baby-shower' },
+              { label: 'Graduation', slug: 'graduation' },
+              { label: "Mother's Day", slug: 'mothers-day' },
+              { label: "Father's Day", slug: 'fathers-day' },
             ],
           },
           {

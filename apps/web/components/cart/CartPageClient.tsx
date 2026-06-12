@@ -267,7 +267,7 @@ export function CartPageClient() {
               {/* Gift wrap toggle */}
               <div className="flex items-center justify-between pt-2 border-t border-hairline">
                 <span className="font-body text-sm text-ink">
-                  🎁 Gift wrapping
+                  <Gift className="inline-block h-4 w-4 mr-1 align-middle" aria-hidden />Gift wrapping
                   <span className="ml-1 text-stone text-xs">(+{cart.giftWrapCost})</span>
                 </span>
                 <button

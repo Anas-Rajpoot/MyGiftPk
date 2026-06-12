@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { X, ShoppingBag } from 'lucide-react'
+import { X, ShoppingBag, Gift } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCartStore } from '@/lib/stores/cart'
 import { useToastStore } from '@/lib/toast'
@@ -204,7 +204,7 @@ export function CartDrawer() {
                   <div className="px-5 py-3 border-t border-hairline">
                     <div className="flex items-center justify-between">
                       <span className="font-body text-sm text-ink">
-                        🎁 Gift wrapping
+                        <Gift className="inline-block h-4 w-4 mr-1 align-middle" aria-hidden />Gift wrapping
                         <span className="ml-1 text-stone text-xs">(+{cart.giftWrapCost})</span>
                       </span>
                       <button
