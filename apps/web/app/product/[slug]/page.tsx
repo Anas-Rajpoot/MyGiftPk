@@ -20,16 +20,22 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  if (WOO_REST_ENABLED) {
-    const slugs = await fetchWooProductSlugs()
-    return slugs.map((slug) => ({ slug }))
+  try {
+    if (WOO_REST_ENABLED) {
+      const slugs = await fetchWooProductSlugs()
+      return slugs.map((slug) => ({ slug }))
+    }
+    const data = await fetchGraphQL<{ products: { nodes: { slug: string }[] } }>(
+      GET_PRODUCT_SLUGS,
+      { first: 100 },
+      { revalidate: 86400 }
+    )
+    return (data.products?.nodes ?? []).map((n) => ({ slug: n.slug }))
+  } catch {
+    // If the WooCommerce server is unreachable at build time, skip pre-rendering.
+    // Pages will be rendered on first request (dynamic fallback).
+    return []
   }
-  const data = await fetchGraphQL<{ products: { nodes: { slug: string }[] } }>(
-    GET_PRODUCT_SLUGS,
-    { first: 100 },
-    { revalidate: 86400 }
-  )
-  return (data.products?.nodes ?? []).map((n) => ({ slug: n.slug }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -50,14 +56,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!product) return { title: 'Product' }
 
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+  const ogImage =
+    product.seo?.opengraphImage?.sourceUrl ??
+    product.image?.sourceUrl ??
+    `${base}/api/og?title=${encodeURIComponent(product.name)}&sub=${encodeURIComponent('mygift.pk')}`
+
   return {
     title: product.seo?.title ?? product.name,
     description: product.seo?.metaDesc ?? product.shortDescription,
-    alternates: { canonical: product.seo?.canonical },
+    alternates: { canonical: product.seo?.canonical ?? `${base}/product/${slug}` },
     openGraph: {
       title: product.seo?.opengraphTitle ?? product.name,
-      description: product.seo?.opengraphDescription ?? product.shortDescription,
-      images: product.seo?.opengraphImage?.sourceUrl ? [product.seo.opengraphImage.sourceUrl] : [],
+      description: product.seo?.opengraphDescription ?? product.shortDescription ?? '',
+      url: `${base}/product/${slug}`,
+      images: [ogImage],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.seo?.opengraphTitle ?? product.name,
+      description: product.seo?.opengraphDescription ?? product.shortDescription ?? '',
+      images: [ogImage],
     },
   }
 }

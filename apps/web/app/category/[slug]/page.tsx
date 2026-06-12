@@ -56,14 +56,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!cat) return { title: 'Category' }
 
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+  const ogImage =
+    cat.seo?.opengraphImage?.sourceUrl ??
+    cat.image?.sourceUrl ??
+    `${base}/api/og?title=${encodeURIComponent(cat.name)}&sub=${encodeURIComponent('mygift.pk')}`
+
   return {
     title: cat.seo?.title ?? cat.name,
     description: cat.seo?.metaDesc ?? cat.description,
-    alternates: { canonical: cat.seo?.canonical },
+    alternates: { canonical: cat.seo?.canonical ?? `${base}/category/${slug}` },
     openGraph: {
       title: cat.seo?.opengraphTitle ?? cat.name,
-      description: cat.seo?.opengraphDescription ?? cat.description,
-      images: cat.seo?.opengraphImage?.sourceUrl ? [cat.seo.opengraphImage.sourceUrl] : [],
+      description: cat.seo?.opengraphDescription ?? cat.description ?? '',
+      url: `${base}/category/${slug}`,
+      images: [ogImage],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: cat.seo?.opengraphTitle ?? cat.name,
+      description: cat.seo?.opengraphDescription ?? cat.description ?? '',
+      images: [ogImage],
     },
   }
 }

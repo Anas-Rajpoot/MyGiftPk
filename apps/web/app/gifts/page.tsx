@@ -11,10 +11,19 @@ import {
 } from '@/lib/woo/rest-client'
 import type { LucideIcon } from 'lucide-react'
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+
 export const metadata: Metadata = {
   title: 'Gifts — MYGIFT',
   description:
     'Explore our gift collections — birthday, anniversary, chocolates, custom hampers and more. Delivered anywhere in Pakistan.',
+  alternates: { canonical: `${BASE_URL}/gifts` },
+  openGraph: {
+    title: 'Shop Gifts — MYGIFT',
+    description: 'Beautifully curated gifts for every occasion — delivered anywhere in Pakistan.',
+    url: `${BASE_URL}/gifts`,
+    images: [`${BASE_URL}/api/og?title=Shop+Gifts&sub=Curated+gifts+for+every+occasion`],
+  },
 }
 
 const MOCK_GIFT_CATEGORIES: WooCategoryCard[] = [
