@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -18,6 +19,26 @@ const MEASUREMENTS = [
 ]
 
 export function SizeGuideModal({ open, onClose }: SizeGuideModalProps) {
+  const closeRef = useRef<HTMLButtonElement>(null)
+
+  // Escape-to-close, focus the close button on open, lock body scroll
+  useEffect(() => {
+    if (!open) return
+    const saved = document.activeElement as HTMLElement | null
+    closeRef.current?.focus()
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+      saved?.focus()
+    }
+  }, [open, onClose])
+
   return (
     <AnimatePresence>
       {open && (
@@ -47,10 +68,11 @@ export function SizeGuideModal({ open, onClose }: SizeGuideModalProps) {
             <div className="flex items-center justify-between px-5 py-4 border-b border-hairline">
               <h2 className="font-display text-lg uppercase tracking-wide text-ink">Size Guide</h2>
               <button
+                ref={closeRef}
                 type="button"
                 onClick={onClose}
                 aria-label="Close size guide"
-                className="w-8 h-8 flex items-center justify-center text-stone hover:text-ink transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-stone hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine rounded-full"
               >
                 <X className="h-5 w-5" aria-hidden />
               </button>

@@ -31,45 +31,47 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
+  // Prefer real WooCommerce products whenever REST is configured.
+  // Products are real even when MOCK_MODE=true (which only stubs GraphQL/global options),
+  // so the WC REST path must take priority over the mock fixtures.
+  if (WOO_REST_ENABLED) {
+    try {
+      const creds = Buffer.from(`${WC_KEY}:${WC_SECRET}`).toString('base64')
+      const url = new URL(`${WP_BASE}/wp-json/wc/v3/products`)
+      url.searchParams.set('search', q)
+      url.searchParams.set('per_page', '8')
+      url.searchParams.set('status', 'publish')
+
+      const res = await fetch(url.toString(), {
+        headers: { Authorization: `Basic ${creds}` },
+        next: { revalidate: 60 },
+      })
+
+      if (res.ok) {
+        const raw = await res.json()
+        const results: SearchResult[] = raw.map((p: {
+          id: number; slug: string; name: string; price: string;
+          images: { src: string }[]
+        }) => ({
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          price: p.price ? `Rs. ${Math.round(parseFloat(p.price)).toLocaleString('en-PK')}` : '',
+          image: p.images?.[0]?.src ?? null,
+        }))
+        return NextResponse.json({ results })
+      }
+      // fall through to mock on non-OK response
+    } catch {
+      // fall through to mock on network error
+    }
+  }
+
   if (MOCK_MODE) {
     const lower = q.toLowerCase()
     const results = MOCK_PRODUCTS.filter((p) => p.name.toLowerCase().includes(lower)).slice(0, 8)
     return NextResponse.json({ results })
   }
 
-  if (!WOO_REST_ENABLED) {
-    return NextResponse.json({ results: [] })
-  }
-
-  try {
-    const creds = Buffer.from(`${WC_KEY}:${WC_SECRET}`).toString('base64')
-    const url = new URL(`${WP_BASE}/wp-json/wc/v3/products`)
-    url.searchParams.set('search', q)
-    url.searchParams.set('per_page', '8')
-    url.searchParams.set('status', 'publish')
-    url.searchParams.set('stock_status', 'instock')
-
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Basic ${creds}` },
-      next: { revalidate: 60 },
-    })
-
-    if (!res.ok) return NextResponse.json({ results: [] })
-
-    const raw = await res.json()
-    const results: SearchResult[] = raw.map((p: {
-      id: number; slug: string; name: string; price: string;
-      images: { src: string }[]
-    }) => ({
-      id: p.id,
-      slug: p.slug,
-      name: p.name,
-      price: p.price ? `Rs. ${Math.round(parseFloat(p.price)).toLocaleString('en-PK')}` : '',
-      image: p.images?.[0]?.src ?? null,
-    }))
-
-    return NextResponse.json({ results })
-  } catch {
-    return NextResponse.json({ results: [] })
-  }
+  return NextResponse.json({ results: [] })
 }

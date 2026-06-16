@@ -119,21 +119,37 @@ export function ProductActions({ product, onSizeGuide }: ProductActionsProps) {
   )
   const whatsappUrl = `https://wa.me/923000000000?text=${whatsappMsg}`
 
+  // Calculate savings percentage
+  const savingsPct = useMemo(() => {
+    if (!onSale || !displayPrice || !displayRegular) return null
+    const sale = parseFloat(displayPrice.replace(/[^\d.]/g, ''))
+    const reg = parseFloat(displayRegular.replace(/[^\d.]/g, ''))
+    if (!reg || !sale) return null
+    return Math.round(((reg - sale) / reg) * 100)
+  }, [onSale, displayPrice, displayRegular])
+
   return (
     <div className="space-y-5">
       {/* Price */}
-      <div className="flex items-baseline gap-2">
-        <span className={clsx('font-display text-2xl sm:text-3xl', onSale ? 'text-wine' : 'text-ink')}>
+      <div className="flex items-baseline gap-3 flex-wrap">
+        <span className={clsx('font-display text-3xl sm:text-4xl tabular-nums', onSale ? 'text-wine' : 'text-ink')}>
           {displayPrice}
         </span>
         {onSale && (
-          <span className="font-body text-base text-stone line-through">{displayRegular}</span>
+          <>
+            <span className="font-body text-base text-stone line-through tabular-nums">{displayRegular}</span>
+            {savingsPct && savingsPct > 0 && (
+              <span className="font-body text-xs font-semibold bg-wine text-ivory px-2 py-0.5 rounded-full">
+                -{savingsPct}%
+              </span>
+            )}
+          </>
         )}
       </div>
 
       {/* Short description */}
       {product.shortDescription && (
-        <p className="font-body text-sm text-stone leading-relaxed">
+        <p className="font-body text-sm text-stone leading-[1.85] border-l-[3px] border-wine/30 pl-4 py-0.5">
           {stripHtml(product.shortDescription)}
         </p>
       )}
@@ -218,9 +234,17 @@ export function ProductActions({ product, onSizeGuide }: ProductActionsProps) {
 
       {/* Stock status */}
       {isVariable && selectedVariation && (
-        <p className={clsx('font-body text-sm', stockStatus === 'IN_STOCK' ? 'text-success' : 'text-wine')}>
-          {stockStatus === 'IN_STOCK' ? 'In Stock' : 'Out of Stock'}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <span
+            className={clsx(
+              'inline-block w-1.5 h-1.5 rounded-full',
+              stockStatus === 'IN_STOCK' ? 'bg-success' : 'bg-wine'
+            )}
+          />
+          <p className={clsx('font-body text-sm', stockStatus === 'IN_STOCK' ? 'text-success' : 'text-wine')}>
+            {stockStatus === 'IN_STOCK' ? 'In Stock' : 'Out of Stock'}
+          </p>
+        </div>
       )}
 
       {/* Qty + ATC */}
@@ -232,14 +256,14 @@ export function ProductActions({ product, onSizeGuide }: ProductActionsProps) {
           disabled={!canAddToCart || isAdding}
           aria-busy={isAdding}
           className={clsx(
-            'flex-1 h-12 rounded-input font-body font-medium text-[15px] transition-colors flex items-center justify-center gap-2',
+            'flex-1 h-14 rounded-input font-body font-semibold text-[15px] tracking-wide transition-all duration-200 flex items-center justify-center gap-2',
             canAddToCart && !isAdding
-              ? 'bg-wine hover:bg-wine-deep text-ivory'
+              ? 'bg-wine hover:bg-wine-deep text-ivory shadow-sm hover:shadow-md'
               : 'bg-hairline text-stone cursor-not-allowed'
           )}
         >
           {isAdding && (
-            <span className="h-4 w-4 border-2 border-stone border-t-transparent rounded-full animate-spin" aria-hidden />
+            <span className="h-4 w-4 border-2 border-ivory/50 border-t-ivory rounded-full animate-spin" aria-hidden />
           )}
           {isAdding ? 'Adding…' : isVariable && !selectedSize ? 'Select a Size' : canAddToCart ? 'Add to Cart' : 'Out of Stock'}
         </button>
@@ -248,7 +272,12 @@ export function ProductActions({ product, onSizeGuide }: ProductActionsProps) {
           onClick={handleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           aria-pressed={isWishlisted}
-          className="w-12 h-12 flex items-center justify-center rounded-input border border-hairline hover:border-wine hover:text-wine text-stone transition-colors"
+          className={clsx(
+            'w-14 h-14 flex items-center justify-center rounded-input border transition-all duration-200',
+            isWishlisted
+              ? 'border-wine bg-wine-tint text-wine'
+              : 'border-hairline hover:border-wine hover:text-wine text-stone'
+          )}
         >
           <Heart className={clsx('h-5 w-5', isWishlisted && 'fill-wine text-wine')} aria-hidden />
         </button>

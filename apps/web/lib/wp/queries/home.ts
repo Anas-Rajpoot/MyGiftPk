@@ -1,5 +1,10 @@
-export const GET_HOME_PAGE = `
-  query GetHomePage {
+/**
+ * Home-page SEO only. Homepage *content* (blocks) now comes from the native
+ * mygift-core REST endpoint via lib/wp/home-content.ts — not ACF/GraphQL.
+ * Yoast SEO for the "/" page is still read over GraphQL.
+ */
+export const GET_HOME_SEO = `
+  query GetHomeSeo {
     page(id: "/", idType: URI) {
       seo {
         title
@@ -9,55 +14,6 @@ export const GET_HOME_PAGE = `
         opengraphDescription
         opengraphImage {
           sourceUrl
-        }
-      }
-      homepageBuilder {
-        blocks {
-          fieldGroupName
-          ... on Page_Homepagebuilder_Blocks_HeroSlider {
-            slides {
-              desktopImage { sourceUrl altText }
-              mobileImage  { sourceUrl altText }
-              heading
-              subtext
-              ctaLabel
-              ctaLink
-            }
-          }
-          ... on Page_Homepagebuilder_Blocks_CategoryTiles {
-            tiles {
-              slug
-              name
-              image { sourceUrl altText }
-            }
-          }
-          ... on Page_Homepagebuilder_Blocks_FeaturedTabs {
-            tabs {
-              id
-              title
-              categorySlug
-            }
-          }
-          ... on Page_Homepagebuilder_Blocks_OccasionChips {
-            chips {
-              label
-              slug
-            }
-          }
-          ... on Page_Homepagebuilder_Blocks_FromAbroadBlock {
-            heading
-            subtext
-            image { sourceUrl altText }
-            ctaLabel
-            ctaLink
-          }
-          ... on Page_Homepagebuilder_Blocks_TrustRow {
-            items {
-              icon
-              heading
-              subtext
-            }
-          }
         }
       }
     }
@@ -110,13 +66,20 @@ export interface FromAbroadData {
   ctaLink: string
 }
 
+export interface GiftBannerBlockData {
+  heading: string
+  subtext: string
+  ctaLabel: string
+  ctaLink: string
+}
+
 export type HomeBlock =
   | { fieldGroupName: 'hero_slider'; slides: HeroSlide[] }
   | { fieldGroupName: 'category_tiles'; tiles: CategoryTile[] }
   | { fieldGroupName: 'featured_tabs'; tabs: FeaturedTab[] }
-  | { fieldGroupName: 'gift_banner' }
+  | ({ fieldGroupName: 'gift_banner' } & GiftBannerBlockData)
   | { fieldGroupName: 'occasion_chips'; chips: OccasionChip[] }
-  | { fieldGroupName: 'from_abroad_block' } & FromAbroadData
+  | ({ fieldGroupName: 'from_abroad_block' } & FromAbroadData)
   | { fieldGroupName: 'trust_row'; items: TrustItem[] }
 
 export interface HomePageSeo {
@@ -131,8 +94,5 @@ export interface HomePageSeo {
 export interface HomePageData {
   page: {
     seo: HomePageSeo
-    homepageBuilder: {
-      blocks: HomeBlock[]
-    }
-  }
+  } | null
 }

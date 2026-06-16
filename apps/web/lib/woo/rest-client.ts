@@ -77,6 +77,7 @@ interface WooRestCategory {
   slug: string
   description: string
   count: number
+  parent: number
   image: { src: string; alt: string } | null
 }
 
@@ -261,6 +262,8 @@ export interface WooProductFilters {
   size?: string
   /** "newest" | "price_asc" | "price_desc" | "sale" */
   sort?: string
+  minPrice?: number
+  maxPrice?: number
 }
 
 export async function fetchWooProducts(filters: WooProductFilters = {}): Promise<WooProductsResult> {
@@ -278,6 +281,8 @@ export async function fetchWooProducts(filters: WooProductFilters = {}): Promise
   }
 
   if (filters.onSale || filters.sort === 'sale') params.on_sale = 'true'
+  if (filters.minPrice !== undefined) params.min_price = String(filters.minPrice)
+  if (filters.maxPrice !== undefined) params.max_price = String(filters.maxPrice)
 
   // Attribute filtering: size takes priority over type
   if (filters.size) {
@@ -352,7 +357,6 @@ export async function fetchWooCategory(slug: string): Promise<CategoryData | nul
     description: c.description ?? '',
     count: c.count,
     image: c.image ? { sourceUrl: c.image.src, altText: c.image.alt ?? '' } : null,
-    acfCategoryIntro: null,
     seo: {
       title: c.name,
       metaDesc: (c.description ?? '').replace(/<[^>]*>/g, '').slice(0, 160),
@@ -392,6 +396,28 @@ export async function fetchWooAllCategories(hideEmpty = true): Promise<WooCatego
   }))
 }
 
+/**
+ * Returns only the children of the "Occasions" parent category.
+ * Falls back to an empty array if no occasion category exists.
+ */
+export async function fetchWooOccasionChips(): Promise<{ label: string; slug: string }[]> {
+  const list = await wooGet<WooRestCategory[]>('/products/categories', {
+    per_page: 100,
+    hide_empty: 'true',
+  })
+
+  // Find the occasion parent (slug: "occasions", "occasion", or name match)
+  const parent = list.find(
+    (c) => c.parent === 0 && /^occasions?$/i.test(c.slug)
+  )
+
+  if (!parent) return []
+
+  return list
+    .filter((c) => c.parent === parent.id)
+    .map((c) => ({ label: c.name, slug: c.slug }))
+}
+
 export async function fetchWooRelatedProducts(
   categorySlug: string,
   excludeId: number,
@@ -399,4 +425,39 @@ export async function fetchWooRelatedProducts(
 ): Promise<ProductNode[]> {
   const result = await fetchWooProducts({ category: categorySlug, first: first + 1 })
   return result.nodes.filter((p) => p.databaseId !== excludeId).slice(0, first)
+}
+
+export interface WooNavItem {
+  label: string
+  link: string
+  children: { label: string; link: string }[]
+}
+
+/** Builds nav items from live WooCommerce categories (parent → children). */
+export async function fetchWooNavCategories(): Promise<WooNavItem[]> {
+  const list = await wooGet<WooRestCategory[]>('/products/categories', {
+    per_page: 100,
+    hide_empty: 'true',
+    orderby: 'count',
+    order: 'desc',
+  })
+
+  const parents = list.filter((c) => c.parent === 0)
+  const childMap = new Map<number, WooRestCategory[]>()
+  list
+    .filter((c) => c.parent !== 0)
+    .forEach((c) => {
+      const arr = childMap.get(c.parent) ?? []
+      arr.push(c)
+      childMap.set(c.parent, arr)
+    })
+
+  return parents.map((p) => ({
+    label: p.name,
+    link: `/category/${p.slug}`,
+    children: (childMap.get(p.id) ?? []).map((c) => ({
+      label: c.name,
+      link: `/category/${c.slug}`,
+    })),
+  }))
 }

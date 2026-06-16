@@ -9,7 +9,10 @@ import {
   ToastDemo, ProductCardDemo,
 } from './InteractiveDemos'
 
-export const metadata = { title: 'Styleguide | MYGIFT' }
+export const metadata = {
+  title: 'Styleguide | MYGIFT',
+  robots: { index: false, follow: false },
+}
 
 const tokens = [
   { name: '--wine',      label: 'wine (primary)',   hex: '#7E2B36', textClass: 'text-ivory' },

@@ -19,10 +19,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/shop`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/gifts`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/gift-builder`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    // Footer pages
+    { url: `${BASE}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE}/faqs`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE}/size-guide`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/shipping-policy`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/returns`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/careers`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/privacy-policy`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/terms`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/track-order`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ]
 
   let productSlugs: string[] = []
   let categorySlugs: string[] = []
+  let blogSlugs: string[] = []
+
+  // Blog posts are GraphQL-sourced regardless of WOO_REST mode
+  try {
+    const bData = await fetchGraphQL<{ posts: { nodes: { slug: string }[] } }>(
+      `query { posts(first:200) { nodes { slug } } }`,
+      {},
+      { tags: ['blog-posts'], revalidate: 3600 }
+    )
+    blogSlugs = (bData.posts?.nodes ?? []).map((n) => n.slug)
+  } catch {
+    // leave empty — rest of sitemap still served
+  }
 
   if (WOO_REST_ENABLED) {
     try {
@@ -69,5 +94,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  return [...staticUrls, ...categoryUrls, ...productUrls]
+  const blogUrls: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({
+    url: `${BASE}/blog/${slug}`,
+    lastModified: now,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }))
+
+  return [...staticUrls, ...categoryUrls, ...productUrls, ...blogUrls]
 }

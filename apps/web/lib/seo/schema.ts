@@ -84,3 +84,47 @@ export function collectionPageSchema(category: CategoryData) {
     numberOfItems: category.count,
   }
 }
+
+export function faqPageSchema(items: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer.replace(/<[^>]*>/g, '') },
+    })),
+  }
+}
+
+export function localBusinessSchema(contact: { phone?: string; email?: string }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'MYGIFT',
+    url: BASE,
+    telephone: contact.phone,
+    email: contact.email,
+  }
+}
+
+export function articleSchema(post: {
+  title: string
+  url: string
+  date: string
+  modified: string
+  image?: string
+  authorName?: string
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    url: post.url,
+    datePublished: post.date,
+    dateModified: post.modified,
+    author: { '@type': 'Person', name: post.authorName ?? 'MYGIFT' },
+    image: post.image ? [post.image] : [],
+    publisher: { '@type': 'Organization', name: 'MYGIFT', url: BASE },
+  }
+}

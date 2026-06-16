@@ -19,7 +19,8 @@ PAYMENTS_SANDBOX). Build lib/wp/client.ts (typed fetchGraphQL with tag-based
 caching per the headless-wp-woo skill) and app/api/revalidate/route.ts
 (secret-checked, revalidateTag). Create docs/ files. Write docs/WP-SETUP.md: exact
 WordPress install checklist — subdomain install; plugins (WooCommerce, WPGraphQL,
-WooGraphQL, ACF Pro, WPGraphQL for ACF, Yoast + Yoast WPGraphQL addon, Wordfence);
+WooGraphQL, Yoast + Yoast WPGraphQL addon, Wordfence — NO ACF: editor content is
+native in the mygift-core plugin);
 category tree (Women/Men/Kids each with Stitched+Unstitched; Gifts with occasions;
 hidden "Gift Components" with Boxes/Chocolates/Candies/Biscuits/Add-ons); global
 attribute pa_type (Stitched/Unstitched); seed 24 dummy clothing products + 8 gift
@@ -58,13 +59,13 @@ nothing (tokens only) · qa checklist logged.
 Skills: mygift-design-system, headless-wp-woo, mygift-seo
 
 PROMPT:
-WP side: create ACF Options "Global" (announcement bar text/link/enabled, header
-menu, footer columns, socials, contact, free_shipping_threshold, gift_wrap_price)
-and page-builder flexible content "Homepage" with layouts: hero_slider[] (desktop
-image, mobile image, heading, subtext, cta_label, cta_link), category_tiles[],
-featured_tabs (3 tabs: title + source category/tag), gift_banner, occasion_chips[],
-from_abroad_block, trust_row[], instagram_toggle. Expose via GraphQL; document
-exact field names in the headless-wp-woo skill references. Next side: Header
+WP side: native mygift-core managers (NO ACF) — "Global Settings" (free_shipping_
+threshold, gift_wrap_price, footer columns, socials, contact) and "Homepage Builder"
+(announcement bar + ordered/toggleable blocks: hero_slider[] desktop/mobile image,
+heading, subtext, cta_label, cta_link; category_tiles[]; featured_tabs title+source
+category; gift_banner; occasion_chips[]; from_abroad_block; trust_row[]). Exposed as
+REST under /wp-json/mygift/v1/* ; field names documented in the headless-wp-woo skill
+§4a (header menu is driven by lib/config/nav.ts + live WC categories). Next side: Header
 (logo, mega-menu from WP menu, search stub, wishlist count, cart trigger),
 AnnouncementBar, Footer — tag `global`. Home `/` renders blocks in admin order:
 HeroSlider (slide 1 = priority LCP image, fixed aspect 21:9 desktop / 4:5 mobile,
@@ -86,8 +87,8 @@ PROMPT:
 /shop and /category/[slug] (server components): filters as URL searchParams —
 category, pa_type Stitched/Unstitched, size, color, price range, on-sale; desktop
 sidebar, mobile bottom-sheet; active chips, sort, result count; 2-col→4-col grid;
-Load More appending ?page=n with crawlable numbered links fallback; ACF category
-intro (collapsible); CollectionPage+ItemList+Breadcrumb schema. /product/[slug]:
+Load More appending ?page=n with crawlable numbered links fallback; category
+"Storefront Intro" (native term meta, collapsible); CollectionPage+ItemList+Breadcrumb schema. /product/[slug]:
 gallery (vertical thumbs, zoom, swipe), variation selectors (type, size + size-guide
 modal), price/sale, qty, Add to Cart (drawer event), wishlist heart, delivery
 estimate line, WhatsApp order button, sticky mobile ATC bar, tabs (Description/
@@ -156,14 +157,15 @@ PROMPT 6A (backend, wp-plugin/mygift-core):
 Handle cart items carrying _gift_contents meta: decrement stock for every
 component on order creation; render contents expanded (indented list + qtys +
 message) in admin order screen, customer emails, and a printable packing slip.
-ACF Options "Gift Builder": boxes (name/image/base_price/capacity), allowed
-component categories, add-ons (name/price), message_char_limit. Expose over
-GraphQL. Server pricing: recompute every component price + stock live, reject
-tampered totals or out-of-stock.
+Native "Gift Builder" settings manager (NO ACF): boxes (name/image/base_price/
+capacity), component category slugs, add-ons (name/price), message_char_limit,
+ribbon colours, occasions. Expose at /wp-json/mygift/v1/gift-builder (components
+read live from Woo). Server pricing: recompute every component price + stock live,
+reject tampered totals or out-of-stock.
 
 PROMPT 6B (frontend /gift-builder):
 4 steps per the skill with gold ribbon progress + sticky live price ticker.
-1) Box cards. 2) Component grid with category tabs from ACF, tap-to-add + qty
+1) Box cards. 2) Component grid with category tabs from Gift Builder settings, tap-to-add + qty
 steppers, bottom tray (items, slots used/capacity), friendly capacity limit.
 3) Personalize: message with live card-mockup preview, ribbon color swatches,
 photo-print add-on stub, occasion tag. 4) Review: visual stack + total →
@@ -187,7 +189,7 @@ Full seo-skill audit of every template. Build app/sitemap.ts (split indexes,
 lastmod from WP, EXCLUDE hidden gift components), robots.ts (block /api /account
 /cart /checkout /wishlist), dynamic OG image route /api/og (cream bg, Bebas title,
 wine ribbon, optional product image). Occasion landing pages /gifts/[occasion]
-(Birthday, Anniversary, Eid, Wedding…): ACF intro, curated products, FAQPage
+(Birthday, Anniversary, Eid, Wedding…): category "Storefront Intro", curated products, FAQPage
 schema. Static pages from WP (about, contact+form, faqs, shipping, returns,
 privacy, terms). /blog + /blog/[slug]: Article schema, TOC, related. Performance:
 bundle analysis, dynamic-import heavy client comps (zoom, builder), image sizes

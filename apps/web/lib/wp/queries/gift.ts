@@ -1,19 +1,8 @@
-export const GET_GIFT_BUILDER_OPTIONS = `
-  query GetGiftBuilderOptions {
-    giftBuilderOptions {
-      boxes { id name image { sourceUrl } basePrice capacity }
-      components {
-        productId name image { sourceUrl }
-        price category stockStatus stockQuantity
-      }
-      addOns { id name price }
-      categories
-      messageCharLimit
-      ribbonColors
-      occasions
-    }
-  }
-`
+/**
+ * Gift Builder options are now served by the native mygift-core REST endpoint
+ * (`/wp-json/mygift/v1/gift-builder`) via lib/wp/home-content.ts
+ * (`fetchGiftBuilderOptions`). The interfaces below are the shared shape.
+ */
 
 export interface GiftBox {
   id: number
@@ -49,6 +38,3 @@ export interface GiftBuilderOptions {
   occasions: string[]
 }
 
-export interface GiftBuilderOptionsResponse {
-  giftBuilderOptions: GiftBuilderOptions
-}

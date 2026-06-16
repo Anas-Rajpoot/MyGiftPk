@@ -1,103 +1,64 @@
-import { NextRequest } from 'next/server'
-import { storeApplyCoupon, storeRemoveCoupon } from '@/lib/woo/store-cart'
-import { APPLY_COUPON, REMOVE_COUPON } from '@/lib/wp/queries/cart'
-import type { WooCart } from '@/lib/wp/queries/cart'
-import { wooMutate } from '@/lib/wp/woo-mutate'
+import { NextRequest, NextResponse } from 'next/server'
+import { validateOrigin } from '@/lib/utils/csrf'
+import { WOO_REST_ENABLED } from '@/lib/cart/route-helpers'
 import {
-  getSessionToken,
-  getCartToken,
-  buildCartData,
-  buildStoreCartData,
-  cartResponse,
-  errorResponse,
-  extractCart,
-  MOCK_CART,
-  MOCK_MODE,
-  WOO_REST_ENABLED,
-} from '@/lib/cart/route-helpers'
+  readCartState, writeCartState, buildCartData, couponExists, emptyCart,
+} from '@/lib/cart/server-cart'
 
 export async function POST(req: NextRequest) {
-  if (MOCK_MODE && !WOO_REST_ENABLED) {
-    return cartResponse({
-      ...MOCK_CART,
-      discounts: [{ code: 'DEMO10', amount: 'Rs. 920' }],
-      total: 'Rs. 8,280',
-    })
-  }
+  if (!validateOrigin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   let body: { code: string }
   try {
     body = await req.json()
   } catch {
-    return errorResponse('Invalid request body', 400)
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { code } = body
-  if (!code) return errorResponse('code is required', 400)
-
-  if (WOO_REST_ENABLED) {
-    try {
-      const token = await getCartToken()
-      const { data, newToken } = await storeApplyCoupon(code, token)
-      const cart = await buildStoreCartData(data)
-      return cartResponse(cart, newToken, true)
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Invalid coupon code'
-      return errorResponse(msg, 422)
-    }
-  }
+  const code = body.code?.trim()
+  if (!code) return NextResponse.json({ error: 'code is required' }, { status: 400 })
+  if (!WOO_REST_ENABLED) return NextResponse.json(emptyCart())
 
   try {
-    const token = await getSessionToken()
-    const { data, newSessionToken } = await wooMutate<Record<string, { cart: WooCart }>>(
-      APPLY_COUPON, { code }, token
-    )
-    const wooCart = extractCart(data as unknown as Record<string, WooCart>)
-    if (!wooCart) return errorResponse('Empty cart response')
-    const cart = await buildCartData(wooCart)
-    return cartResponse(cart, newSessionToken)
+    const exists = await couponExists(code)
+    if (!exists) {
+      return NextResponse.json({ error: 'This coupon code is not valid.' }, { status: 422 })
+    }
+    const state = await readCartState()
+    if (!state.coupons.some((c) => c.toLowerCase() === code.toLowerCase())) {
+      state.coupons.push(code)
+    }
+    const cart = await buildCartData(state)
+    const res = NextResponse.json(cart)
+    writeCartState(res, state)
+    return res
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Invalid coupon code'
-    return errorResponse(msg, 422)
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Could not apply coupon' }, { status: 422 })
   }
 }
 
 export async function DELETE(req: NextRequest) {
-  if (MOCK_MODE && !WOO_REST_ENABLED) return cartResponse(MOCK_CART)
+  if (!validateOrigin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   let body: { code: string }
   try {
     body = await req.json()
   } catch {
-    return errorResponse('Invalid request body', 400)
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { code } = body
-  if (!code) return errorResponse('code is required', 400)
-
-  if (WOO_REST_ENABLED) {
-    try {
-      const token = await getCartToken()
-      const { data, newToken } = await storeRemoveCoupon(code, token)
-      const cart = await buildStoreCartData(data)
-      return cartResponse(cart, newToken, true)
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to remove coupon'
-      return errorResponse(msg)
-    }
-  }
+  const code = body.code?.trim()
+  if (!code) return NextResponse.json({ error: 'code is required' }, { status: 400 })
+  if (!WOO_REST_ENABLED) return NextResponse.json(emptyCart())
 
   try {
-    const token = await getSessionToken()
-    const { data, newSessionToken } = await wooMutate<Record<string, { cart: WooCart }>>(
-      REMOVE_COUPON, { code }, token
-    )
-    const wooCart = extractCart(data as unknown as Record<string, WooCart>)
-    if (!wooCart) return errorResponse('Empty cart response')
-    const cart = await buildCartData(wooCart)
-    return cartResponse(cart, newSessionToken)
+    const state = await readCartState()
+    state.coupons = state.coupons.filter((c) => c.toLowerCase() !== code.toLowerCase())
+    const cart = await buildCartData(state)
+    const res = NextResponse.json(cart)
+    writeCartState(res, state)
+    return res
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Failed to remove coupon'
-    return errorResponse(msg)
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Failed to remove coupon' }, { status: 500 })
   }
 }

@@ -11,6 +11,14 @@ const categoryColors: Record<string, string> = {
   gifts: 'bg-wine-tint',
 }
 
+/* Local fallback images — used when WP hasn't supplied a real image yet */
+const localCategoryImages: Record<string, { src: string; alt: string }> = {
+  women: { src: '/categories/women.webp', alt: 'Women fashion collection' },
+  men:   { src: '/categories/men.webp',   alt: 'Men fashion collection' },
+  kids:  { src: '/categories/kids.webp',  alt: 'Kids fashion collection' },
+  gifts: { src: '/categories/gifts.webp', alt: 'Gift collection' },
+}
+
 interface CategoryTilesProps {
   tiles: CategoryTile[]
 }
@@ -24,7 +32,8 @@ export function CategoryTiles({ tiles }: CategoryTilesProps) {
         </RibbonHeading>
         <ul className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 list-none p-0 m-0">
           {tiles.map((tile) => {
-            const hasImage = tile.image?.sourceUrl && !tile.image.sourceUrl.startsWith('/placeholder')
+            const hasWpImage = tile.image?.sourceUrl && !tile.image.sourceUrl.startsWith('/placeholder')
+            const localImg = localCategoryImages[tile.slug]
             const colorClass = categoryColors[tile.slug] ?? 'bg-cream'
             return (
               <li key={tile.slug}>
@@ -33,10 +42,18 @@ export function CategoryTiles({ tiles }: CategoryTilesProps) {
                   className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine focus-visible:ring-offset-2 rounded-card"
                 >
                   <div className={`relative aspect-[3/4] rounded-card overflow-hidden ${colorClass}`}>
-                    {hasImage && tile.image ? (
+                    {hasWpImage && tile.image ? (
                       <Image
                         src={tile.image.sourceUrl}
                         alt={tile.image.altText}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : localImg ? (
+                      <Image
+                        src={localImg.src}
+                        alt={localImg.alt}
                         fill
                         sizes="(max-width: 768px) 50vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"

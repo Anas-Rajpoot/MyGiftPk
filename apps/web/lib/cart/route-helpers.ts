@@ -2,9 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { fetchGraphQL } from '@/lib/wp/client'
-import { GET_GLOBAL_OPTIONS } from '@/lib/wp/queries/global'
-import type { GlobalOptionsResponse } from '@/lib/wp/queries/global'
+import { fetchGlobalOptions, DEFAULT_GLOBAL } from '@/lib/wp/home-content'
 import { normalizeCart } from '@/lib/cart/normalize'
 import { normalizeStoreCart } from '@/lib/woo/store-cart'
 import type { WooCart } from '@/lib/wp/queries/cart'
@@ -42,12 +40,7 @@ export async function getCartToken(): Promise<string | null> {
 }
 
 async function getGlobalOpts() {
-  const data = await fetchGraphQL<GlobalOptionsResponse>(
-    GET_GLOBAL_OPTIONS,
-    {},
-    { tags: ['global'], revalidate: 3600 }
-  )
-  return data.globalOptions
+  return (await fetchGlobalOptions()) ?? DEFAULT_GLOBAL
 }
 
 /** Return CartData JSON and optionally update the session cookie. */

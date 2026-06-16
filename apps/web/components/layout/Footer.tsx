@@ -114,11 +114,42 @@ export function Footer({ data }: { data: FooterData }) {
           ))}
         </div>
 
+        {/* Track Your Order — prominent CTA */}
+        <div className="mt-12 pt-8 border-t border-ivory/10">
+          <Link
+            href="/track-order"
+            className="inline-flex items-center gap-2 font-body text-sm font-semibold text-ivory/80 hover:text-ivory transition-colors group"
+          >
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4 shrink-0"
+              aria-hidden
+            >
+              <rect x="2" y="4" width="16" height="12" rx="2" />
+              <path d="M6 4v2M14 4v2M2 9h16" />
+            </svg>
+            Track Your Order →
+          </Link>
+        </div>
+
         {/* Bottom bar */}
-        <div className="mt-14 pt-6 border-t border-ivory/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="mt-6 pt-6 border-t border-ivory/10 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="font-body text-xs text-ivory/40">{data.bottomText}</p>
           <p className="font-body text-xs text-ivory/40">
-            Made with care for Pakistan
+            Developed by{' '}
+            <a
+              href="https://hsdigisolutions.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-ivory/70 transition-colors underline underline-offset-2"
+            >
+              Hsdigisolutions
+            </a>
           </p>
         </div>
       </div>

@@ -17,6 +17,18 @@ function getSecret(): string {
   return s
 }
 
+export interface Address {
+  first_name?: string
+  last_name?: string
+  phone?: string
+  address_1?: string
+  address_2?: string
+  city?: string
+  state?: string
+  postcode?: string
+  country?: string
+}
+
 export interface AuthUser {
   id: number
   email: string
@@ -25,6 +37,11 @@ export interface AuthUser {
   role: 'customer' | 'administrator'
   /** Raw WP auth token — stored only in REAL mode for WC REST calls */
   wpToken?: string
+  /** WhatsApp contact number (E.164-ish), captured in profile */
+  whatsapp?: string
+  /** Cached billing/shipping for checkout prefill */
+  billing?: Address
+  shipping?: Address
 }
 
 // ── minimal HS256 JWT (no external dep) ─────────────────────────────────────
@@ -67,6 +84,9 @@ export function createAuthToken(user: AuthUser): string {
     lastName: user.lastName,
     role: user.role,
     wpToken: user.wpToken,
+    whatsapp: user.whatsapp,
+    billing: user.billing,
+    shipping: user.shipping,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + THIRTY_DAYS,
   })

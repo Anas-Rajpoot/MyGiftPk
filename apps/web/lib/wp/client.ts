@@ -55,6 +55,26 @@ export async function fetchGraphQL<T>(
   return cached()
 }
 
+/**
+ * Resilient variant: returns null instead of throwing when the GraphQL request
+ * fails (network, HTTP, or schema errors such as an optional Yoast `seo` field
+ * being absent because the WPGraphQL-SEO addon isn't installed). Callers fall
+ * back to their built-in defaults — a missing optional field must never 500 a
+ * page (see CLAUDE.md resilience rule).
+ */
+export async function fetchGraphQLSafe<T>(
+  query: string,
+  variables?: Record<string, unknown>,
+  options: FetchOptions = {}
+): Promise<T | null> {
+  try {
+    return await fetchGraphQL<T>(query, variables, options)
+  } catch (err) {
+    console.warn(`[fetchGraphQLSafe] falling back to defaults: ${(err as Error).message}`)
+    return null
+  }
+}
+
 function getMockData<T>(query: string): T {
   const queryName = query.match(/(?:query|mutation)\s+(\w+)/)?.[1] ?? 'unknown'
   const mock = (fixtures as Record<string, unknown>)[queryName]

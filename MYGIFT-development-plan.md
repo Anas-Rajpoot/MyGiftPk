@@ -54,7 +54,7 @@ Clothing (Men / Women / Kids · Stitched & Unstitched) + Customizable Gift Build
 |---|---|
 | WooCommerce | Products, orders, inventory, coupons |
 | WPGraphQL + WooGraphQL | GraphQL API for products, categories, cart |
-| ACF Pro + WPGraphQL for ACF | All frontend content control (hero, banners, sections) |
+| MYGIFT Core (custom) native content managers | All frontend content control (hero, banners, sections, FAQs, gift builder) — free, no ACF |
 | Yoast SEO + WPGraphQL Yoast addon | Meta titles/descriptions editable per page/product, exposed to Next.js |
 | JWT Auth / WooCommerce sessions | Customer login, cart persistence |
 | Custom plugin: "MYGIFT Gift Builder" | Bundle pricing logic, gift component categories (built in-house, see §6) |
@@ -231,7 +231,7 @@ Gifts
 - Build a small **custom WP plugin**: a "Gift Bundle" composite product type (or a container product + line-item meta). On add-to-cart, the Next.js API route sends the selected component IDs/qtys → server **recalculates price from the live WooCommerce catalog** (never trust the client's total), validates stock for every component, then creates one cart item with meta listing the contents.
 - Order emails/admin order screen show the bundle expanded (so packing staff see exactly: 1× small box, 2× Dairy Milk, 1× candy jar, message text).
 - Inventory decrements on each component product. Components are excluded from sitemaps/shop (hidden catalog visibility) but purchasable inside bundles.
-- Admin controls (ACF on the Builder settings page): which categories appear as tabs, box sizes/capacities, min/max items, add-on prices, message character limit.
+- Admin controls (native MYGIFT → Gift Builder settings page): which categories appear as tabs, box sizes/capacities, min/max items, add-on prices, message character limit.
 
 This single feature is hard to copy with a theme — it's your moat. Budget real time for it (≈2 sprints).
 
@@ -239,7 +239,7 @@ This single feature is hard to copy with a theme — it's your moat. Budget real
 
 ## 7. Admin-Controlled Frontend (no developer needed for content)
 
-Everything marketing-visible is editable in WordPress via **ACF Pro Options Pages + Flexible Content**, exposed over WPGraphQL:
+Everything marketing-visible is editable in WordPress via the **MYGIFT Control Center** — native admin screens in the free mygift-core plugin, exposed over a small REST API (no ACF, no paid plugins):
 
 | WP Admin section | Controls |
 |---|---|
@@ -295,7 +295,7 @@ Validate everything in Google Rich Results Test before launch.
 |---|---|---|
 | **0. Foundation** | 1 | Hosting (WP on Cloudways/Kinsta-class PK-friendly host; Next.js on Vercel), domains/subdomain, repo, CI, staging. WP install + plugin stack + WPGraphQL wired. |
 | **1. Design** | 1–2 | Design tokens in code, Figma of Home/Shop/Product/Drawer/Gift Builder (desktop+mobile), component library (buttons, cards, inputs, modals) in Storybook or a styleguide route. Sign-off before build. |
-| **2. Catalog & content model** | 2–3 | Woo categories/attributes/variations set up, ACF homepage builder + global options, 20–30 real products loaded for development. |
+| **2. Catalog & content model** | 2–3 | Woo categories/attributes/variations set up, native homepage builder + global options (mygift-core), 20–30 real products loaded for development. |
 | **3. Core storefront** | 3–5 | Header/footer, Home (all admin blocks), Shop + filters, Category pages, Product page, Quick View, Cart drawer, Cart page, Wishlist. ISR + revalidation webhooks. |
 | **4. Checkout & accounts** | 5–7 | Multi-step checkout, gift mode (recipient/sender, message, date), COD + JazzCash/Easypaisa + Stripe intl, order emails (branded), accounts, guest order tracking. |
 | **5. Gift Builder** | 7–9 | Custom bundle plugin + 4-step frontend flow, live pricing, stock validation, packing-slip output. |

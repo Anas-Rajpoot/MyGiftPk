@@ -31,14 +31,18 @@ Complete this before setting `MOCK_MODE=false` in .env.local.
 | WooCommerce | latest | wordpress.org/plugins |
 | WPGraphQL | ^1.x | wpgraphql.com or wp.org |
 | WooGraphQL (WPGraphQL WooCommerce) | latest | github.com/wp-graphql/wp-graphql-woocommerce |
-| Advanced Custom Fields (ACF) Pro | ≥6.x | acfpro.com (paid) |
-| WPGraphQL for ACF | latest | github.com/wp-graphql/wpgraphql-acf |
 | Yoast SEO | latest | wp.org |
 | Add WPGraphQL SEO (Yoast) | latest | github.com/ashhitch/wp-graphql-yoast-seo |
 | WPGraphQL JWT Authentication | latest | github.com/wp-graphql/wp-graphql-jwt-authentication |
 | Wordfence Security | latest | wp.org |
 | WP Mail SMTP | latest | wp.org |
 | Redirection | latest | wp.org |
+
+**No paid plugins.** All editor-managed content (homepage, global settings, gift
+builder, FAQs, careers, category intros) is handled natively by the **MYGIFT Core**
+plugin (§10) via branded admin screens + REST endpoints — there is no ACF, no SCF,
+and no WPGraphQL-for-ACF bridge. WPGraphQL/WooGraphQL is used only for the product
+catalogue; Yoast (+ its WPGraphQL addon) only for SEO meta.
 
 After installing WPGraphQL JWT Authentication, add to `wp-config.php`:
 ```php
@@ -120,55 +124,29 @@ Create in Gift Components category with **Catalog visibility: Hidden**:
 
 ---
 
-## 8. ACF Options Pages
+## 8. Editor-Managed Content (MYGIFT Control Center — native, no ACF)
 
-WooCommerce → (ACF Pro must be active) → Custom Fields → Options Pages:
+All frontend content is managed by the **MYGIFT Core** plugin (install in §10), not
+ACF. After activating the plugin, a top-level **MYGIFT** menu appears with these
+screens — each self-seeds sensible defaults on activation, so there is **nothing to
+configure by hand** to get a working site:
 
-### Global Options
-Create Options page: **title** "Global Settings", **menu_slug** "global-settings"
-
-Fields:
-| Field Label | Field Name | Type | Notes |
-|---|---|---|---|
-| Announcement Bar | announcement_bar | Group | |
-| → Enabled | enabled | True/False | |
-| → Text | text | Text | max 80 chars |
-| → Link URL | link | URL | |
-| Free Shipping Threshold | free_shipping_threshold | Number | in PKR, e.g. 3000 |
-| Gift Wrap Price | gift_wrap_price | Number | in PKR, e.g. 150 |
-
-### Homepage Builder
-Create Options page: **title** "Homepage", **menu_slug** "homepage-builder"
-
-Add a Flexible Content field named `homepage_builder` with these layouts:
-
-| Layout | Fields |
-|---|---|
-| `hero_slider` | slides[] (desktop_image, mobile_image, heading, subtext, cta_label, cta_link) |
-| `category_tiles` | tiles[] (image, label, link) |
-| `featured_tabs` | tabs[] (title, source_category, source_tag) |
-| `gift_banner` | heading, subtext, cta_label, cta_link |
-| `occasion_chips` | chips[] (label, link) |
-| `from_abroad_block` | heading, body, cta_label, cta_link |
-| `trust_row` | items[] (icon, label) |
-| `instagram_toggle` | enabled (True/False) |
-
-### Gift Builder Options
-Create Options page: **title** "Gift Builder", **menu_slug** "gift-builder-settings"
-
-Fields:
-| Field Label | Field Name | Type |
+| MYGIFT menu screen | Controls | REST endpoint (Next.js reads) |
 |---|---|---|
-| Boxes | boxes | Repeater |
-| → Name | name | Text |
-| → Image | image | Image |
-| → Base Price (Rs.) | base_price | Number |
-| → Capacity (items) | capacity | Number |
-| Allowed Component Categories | allowed_categories | Checkbox (select from gift-components subcategories) |
-| Add-ons | add_ons | Repeater |
-| → Name | name | Text |
-| → Price (Rs.) | price | Number |
-| Message Character Limit | message_char_limit | Number (default: 200) |
+| **Homepage Builder** | Announcement bar; ordered/toggleable blocks: hero slider, category tiles, featured tabs, gift banner, occasion chips, from-abroad, trust row | `/wp-json/mygift/v1/home-content` |
+| **Global Settings** | Free-shipping threshold, gift-wrap price, footer columns, socials, contact | `/wp-json/mygift/v1/global` |
+| **Gift Builder** | Boxes, add-ons, component category slugs, message limit, ribbon colours, occasions (component products read live from WooCommerce) | `/wp-json/mygift/v1/gift-builder` |
+| **FAQs** | Question/answer/category repeater | `/wp-json/mygift/v1/faqs` |
+| **Careers** | Job listings repeater | `/wp-json/mygift/v1/careers` |
+| **Connection & Emails** | Revalidate secret, Next.js URL, packed-email toggle | — |
+
+**Category intros:** edit a product category (Products → Categories → a category) and
+fill the **Storefront Intro** field — served at `/wp-json/mygift/v1/category-intro?slug=…`.
+
+There are no field groups to recreate by clicking. The structure is version-controlled
+as plain PHP in `wp-plugin/mygift-core/includes/` — to rebuild the WP install from
+scratch, just install the plugin (§10). Saving any screen fires the revalidation
+webhook so the storefront updates within ~60 seconds.
 
 ---
 
@@ -198,9 +176,10 @@ MOCK_MODE=false
 Copy `wp-plugin/mygift-core/` from this repo to:
 `/wp-content/plugins/mygift-core/`
 
-Activate via WP Admin → Plugins → "MYGIFT Core"
+Activate via WP Admin → Plugins → "MYGIFT Core". This adds the top-level **MYGIFT**
+menu (Control Center) with all content screens above.
 
-Configure Settings → MYGIFT Core:
+Configure **MYGIFT → Connection & Emails**:
 - Revalidate Secret: paste the same value as `REVALIDATE_SECRET` in .env.local
 - Next.js URL: `https://mygift.pk` (or staging URL)
 

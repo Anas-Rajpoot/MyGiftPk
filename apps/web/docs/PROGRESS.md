@@ -1,5 +1,131 @@
 # PROGRESS.md — MYGIFT Session Log
 
+## ACF Pro Removal → Native mygift-core Content (v0.5.0) — 2026-06-16
+
+### Status: BUILT ✓ (see D-009)
+
+Replaced the paid **ACF Pro + WPGraphQL-for-ACF** stack with **free, native content
+managers** in the mygift-core plugin, exposed over REST and consumed by Next.js.
+
+**WordPress (mygift-core v0.5.0)** — all PHP `php -l` clean:
+- `class-content-base.php` — shared base: Settings API + REST + revalidate-on-save + admin-field helpers
+- `class-home-content.php` — Homepage Builder: announcement bar + 7 ordered/toggleable blocks → `/mygift/v1/home-content`
+- `class-global-settings.php` — threshold, gift-wrap, footer/socials/contact → `/mygift/v1/global`
+- `class-gift-builder-settings.php` — boxes/add-ons/options + **live Woo components** → `/mygift/v1/gift-builder`
+- `class-faqs.php`, `class-careers.php` — repeaters → `/mygift/v1/faqs`, `/careers`
+- `class-category-intro.php` — "Storefront Intro" term meta → `/mygift/v1/category-intro?slug=`
+- `class-control-center.php` — branded **MYGIFT** top-level menu + dashboard (counts, quick links, help)
+- `assets/admin.{css,js}` — shared no-code repeater + media picker
+- Removed `acf/save_post` hook; reparented settings page; product count uses live `wc_get_products` (cache-proof)
+
+**Next.js** — `pnpm typecheck` ✓ · `pnpm lint` ✓ · `pnpm build` ✓ (118 routes):
+- `lib/wp/home-content.ts` — unified REST content layer + `DEFAULT_*` fallbacks (gated on MOCK_MODE + shape-validated)
+- Rewired: layout, home page, HomeBlockRenderer, cart route-helpers, contact, faqs, careers, gift-builder, category
+- Deleted ACF GraphQL queries (`homepageBuilder`, `globalOptions`, `giftBuilderOptions`, FAQ/careers, `acfCategoryIntro`); trimmed fixtures
+
+**Docs/skills:** WP-SETUP, RUNBOOK, headless-wp-woo (§4a), gift-builder, seo skills, PHASES,
+dev plan, playbook all de-ACF'd. Decision logged as D-009.
+
+### Marketing-team test (to run on staging after re-uploading v0.5.0)
+- [ ] MYGIFT → Homepage Builder → edit hero slide 1 heading + image → Save → storefront updates
+- [ ] MYGIFT → FAQs → + Add FAQ → Save → appears on /faqs
+- [ ] Dashboard shows correct published-product count (56)
+
+### Remaining (needs live WP)
+- [ ] Re-upload mygift-core v0.5.0; confirm Control Center + all 6 REST endpoints return data
+- [ ] Set MOCK_MODE=false; confirm storefront reads live content (no nulls)
+
+---
+
+## Phase 8A + 8B — Account/Auth + QA Hardening — 2026-06-15
+
+### Status: COMPLETE ✓
+
+### Phase 8A — Customer Account + Auth (already built, verified)
+
+All routes and components confirmed in-place:
+- `proxy.ts` — route protection for `/account/*` (redirects to login when no cookie)
+- `lib/auth/server.ts` — HS256 JWT, 30-day cookie, `getAuthUser()`, `setAuthCookie()`, `clearAuthCookie()`
+- `app/api/auth/login/route.ts` — rate-limited 5/60s; MOCK_MODE + WPGraphQL real mode
+- `app/api/auth/register/route.ts` — rate-limited 3/60s; email regex + 8-char password min
+- `app/api/auth/logout/route.ts` — clears cookie
+- `app/account/layout.tsx` — server guard → redirect to login; AccountNav sidebar
+- `app/account/page.tsx` — dashboard tiles (Orders, Profile, Track, Gift Builder)
+- `app/account/login/page.tsx` + `components/account/LoginForm.tsx`
+- `app/account/register/page.tsx` + `components/account/RegisterForm.tsx`
+- `app/account/orders/page.tsx` + `components/account/OrderList.tsx` — fetches from `GET /api/account/orders`
+- `app/account/profile/page.tsx` + `components/account/ProfileForm.tsx` — PATCH `/api/account/profile`
+- `app/account/track/page.tsx` + `components/account/TrackOrderForm.tsx` — POST `/api/account/track`
+- `app/api/account/orders/route.ts` — WC REST v3 `/orders?customer={id}` with mock
+- `app/api/account/profile/route.ts` — WC REST v3 `/customers/{id}` PUT with mock
+- `app/api/account/track/route.ts` — order lookup by number + phone last-7 match
+
+### Phase 8B — QA Hardening
+
+**Lint fixes (0 errors, 0 warnings achieved):**
+- `Lightbox.tsx` — removed `setState-in-useEffect` violations:
+  - Replaced useEffect zoom-reset with zoom reset in `navigate()` + thumbnail click handler
+  - Replaced open/initialIndex useEffect with render-phase derived state (`[prevOpen, setPrevOpen]` pattern)
+- `SearchOverlay.tsx` — split into outer `SearchOverlay` + inner `SearchContent` (mounts fresh per open);
+  replaced `setLoading` + `setResults` at effect top with `useTransition(async)` (React 19)
+- `OrderTimeline.tsx` — replaced `<a href="/contact">` with `<Link>`
+- `checkout/route.ts` — removed unused `cartResponse` import; removed unused `emptyCart` destructure
+- `blog/[slug]/page.tsx` — removed unused `Button` import
+- `CheckoutClient.tsx` — removed unused `CreditCard` import; removed dead `updateShipping` function;
+  changed `const [shippingSame, setShippingSame]` → `const [shippingSame]` (setter never used);
+  changed `const [shipping, setShipping]` → `const [shipping]` (setter removed with updateShipping)
+
+**Branded error pages:**
+- `app/not-found.tsx` — 404 page: decorative 404 watermark, RibbonHeading H1, "Back to Home" + "Browse Shop" CTAs, contact link
+- `app/error.tsx` — 500 page: `'use client'`, reset + home CTAs, logs to console (Sentry ready)
+
+**Security headers (`next.config.ts`):**
+- `X-Frame-Options: SAMEORIGIN`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
+- `X-XSS-Protection: 1; mode=block`
+- `Strict-Transport-Security` (production only, 2-year max-age + preload)
+- `Content-Security-Policy` — blocks frame-ancestors, object-src, form-action; allows Next.js 16 inline scripts
+
+**Token fix:**
+- `styles/tokens.css` — added `--whatsapp-deep: #20b957` (hover variant)
+- `app/globals.css` — mapped to `--color-whatsapp-deep`
+- `app/contact/page.tsx` — replaced hardcoded `#25D366`/`#20b957` with `bg-whatsapp`/`bg-whatsapp-deep`
+
+**RUNBOOK.md** (`apps/web/docs/RUNBOOK.md`) — complete marketing-team guide:
+1. Edit hero banner
+2. Add a product
+3. Configure gift boxes
+4. Create occasion landing pages
+5. Change announcement bar
+6. Manage blog posts
+7. Manage order statuses + shipment tracking
+8. Webhook revalidation troubleshooting
+
+### QA results (2026-06-15)
+- [x] `pnpm typecheck` — zero errors
+- [x] `pnpm lint` — zero errors, zero warnings
+- [x] `pnpm build` — zero errors; all routes present
+- [x] Hardcoded hex: 0 violations in components/ or app/ (except permitted: RIBBON_SWATCHES in StepPersonalize, OG image route, styleguide token display)
+- [x] WP admin URL: not in any client-side file
+- [x] Branded 404/500 pages exist and follow design system
+- [x] Security headers applied via next.config.ts
+- [x] RUNBOOK.md written and complete
+
+### Remaining (needs live WP + deploy):
+- [ ] Upload `mygift-core.zip` → activate → verify no fatal errors
+- [ ] Payment gateway credentials (JazzCash/Easypaisa)
+- [ ] Sentry integration + uptime monitoring
+- [ ] WP backups configured
+- [ ] Deploy to Vercel prod + DNS cutover
+- [ ] 3 real test orders (clothing COD, gift bundle, international card sandbox)
+- [ ] Search Console verified + sitemap submitted
+- [ ] Lighthouse scores on live site (Perf ≥ 90, SEO ≥ 95)
+- [ ] Cross-browser QA (Chrome/Safari/Firefox, iOS Safari, Android Chrome)
+
+---
+
 ## Site Hardening + Plugin Rewrite (v0.3.0) — 2026-06-12
 
 ### Status: COMPLETE ✓

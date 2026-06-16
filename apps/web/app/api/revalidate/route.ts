@@ -1,7 +1,16 @@
 import { revalidateTag } from 'next/cache'
 import { NextRequest } from 'next/server'
+import crypto from 'crypto'
 
 const FIVE_MINUTES = 5 * 60 * 1000
+
+/** Constant-time string comparison to avoid timing side-channels on the secret. */
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ab.length !== bb.length) return false
+  return crypto.timingSafeEqual(ab, bb)
+}
 
 export async function POST(request: NextRequest) {
   let body: { secret?: string; tags?: string[]; timestamp?: number }
@@ -12,7 +21,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  if (!body.secret || body.secret !== process.env.REVALIDATE_SECRET) {
+  const secret = process.env.REVALIDATE_SECRET
+  if (!secret || !body.secret || !safeEqual(body.secret, secret)) {
     return Response.json({ error: 'Invalid secret' }, { status: 401 })
   }
 

@@ -3,7 +3,7 @@
  * Plugin Name:       MYGIFT Core
  * Plugin URI:        https://mygift.pk
  * Description:       Order tracking pipeline, shipment management, revalidation webhooks, and transactional emails for the MYGIFT headless WooCommerce store.
- * Version:           0.3.0
+ * Version:           0.5.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            MYGIFT
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Plugin constants ───────────────────────────────────────────────────────────
 
-define( 'MYGIFT_CORE_VERSION',  '0.3.0' );
+define( 'MYGIFT_CORE_VERSION',  '0.5.0' );
 define( 'MYGIFT_CORE_FILE',     __FILE__ );
 define( 'MYGIFT_CORE_DIR',      plugin_dir_path( __FILE__ ) );
 define( 'MYGIFT_CORE_URL',      plugin_dir_url( __FILE__ ) );
@@ -72,19 +72,37 @@ function mygift_core_init() {
 
 	// Feature classes that have no strict WC class-hierarchy dependency.
 	require_once MYGIFT_CORE_DIR . 'includes/class-revalidate-webhook.php';
-	require_once MYGIFT_CORE_DIR . 'includes/class-home-content.php';
 	require_once MYGIFT_CORE_DIR . 'includes/class-order-statuses.php';
 	require_once MYGIFT_CORE_DIR . 'includes/class-status-timestamps.php';
+	require_once MYGIFT_CORE_DIR . 'includes/class-email-branding.php';
 
 	MYGIFT_Revalidate_Webhook::init();
-	MYGIFT_Home_Content::init();
 	MYGIFT_Order_Statuses::init();
 	MYGIFT_Status_Timestamps::init();
+	MYGIFT_Email_Branding::init();
+
+	// Native content managers (free ACF replacement) — admin screens + REST.
+	require_once MYGIFT_CORE_DIR . 'includes/class-content-base.php';
+	require_once MYGIFT_CORE_DIR . 'includes/class-home-content.php';
+	require_once MYGIFT_CORE_DIR . 'includes/class-global-settings.php';
+	require_once MYGIFT_CORE_DIR . 'includes/class-gift-builder-settings.php';
+	require_once MYGIFT_CORE_DIR . 'includes/class-faqs.php';
+	require_once MYGIFT_CORE_DIR . 'includes/class-careers.php';
+	require_once MYGIFT_CORE_DIR . 'includes/class-category-intro.php';
+
+	MYGIFT_Home_Content::init();
+	MYGIFT_Global_Settings::init();
+	MYGIFT_Gift_Builder_Settings::init();
+	MYGIFT_Faqs::init();
+	MYGIFT_Careers::init();
+	MYGIFT_Category_Intro::init();
 
 	// Admin-only features.
 	if ( is_admin() ) {
+		require_once MYGIFT_CORE_DIR . 'includes/class-control-center.php';
 		require_once MYGIFT_CORE_DIR . 'includes/class-shipment-tracking.php';
 		require_once MYGIFT_CORE_DIR . 'includes/class-admin-columns.php';
+		MYGIFT_Control_Center::init();
 		MYGIFT_Shipment_Tracking::init();
 		MYGIFT_Admin_Columns::init();
 	}

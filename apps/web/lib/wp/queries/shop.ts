@@ -34,7 +34,6 @@ export const GET_CATEGORY_WITH_PRODUCTS = `
     productCategory(id: $slug, idType: SLUG) {
       id slug name description count
       image { sourceUrl altText }
-      acfCategoryIntro { intro }
       seo {
         title metaDesc canonical
         opengraphTitle opengraphDescription
@@ -159,7 +158,6 @@ export interface CategoryData {
   description: string
   count: number
   image: WpImage | null
-  acfCategoryIntro?: { intro?: string } | null
   seo: WpSeo
 }
 

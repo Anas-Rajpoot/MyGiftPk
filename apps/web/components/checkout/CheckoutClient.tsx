@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Lock, Truck, CreditCard, Building2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Lock, Truck, Building2, X, Tag, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useCartStore } from '@/lib/stores/cart'
-import { fetchCart } from '@/lib/cart/client'
+import { fetchCart, removeItem, applyCoupon, removeCoupon } from '@/lib/cart/client'
 import { PK_PROVINCES, PAYMENT_METHODS, type PaymentMethodId } from '@/lib/woo/checkout'
 import type { CartData } from '@/lib/cart/normalize'
 
@@ -142,21 +142,100 @@ export function CheckoutClient() {
   }, [cart, setCart])
 
   const [billing, setBilling] = useState<AddressFields>(EMPTY_ADDRESS)
-  const [shippingSame, setShippingSame] = useState(true)
-  const [shipping, setShipping] = useState<AddressFields>(EMPTY_ADDRESS)
+  const [shippingSame] = useState(true)
+  const [shipping] = useState<AddressFields>(EMPTY_ADDRESS)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('cod')
   const [customerNote, setCustomerNote] = useState('')
   const [summaryOpen, setSummaryOpen] = useState(false)
   const [errors, setErrors] = useState<Partial<Record<keyof AddressFields | 'payment', string>>>({})
   const [submitting, setSubmitting] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [authed, setAuthed] = useState<boolean | null>(null)
+
+  // Detect login + prefill saved address (never blocks — guests skip this entirely)
+  useEffect(() => {
+    let active = true
+    fetch('/api/account/profile')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!active) return
+        if (!d?.user) { setAuthed(false); return }
+        setAuthed(true)
+        const b = d.user.billing ?? {}
+        setBilling((prev) => ({
+          first_name: prev.first_name || b.first_name || d.user.firstName || '',
+          last_name: prev.last_name || b.last_name || d.user.lastName || '',
+          email: prev.email || d.user.email || '',
+          phone: prev.phone || b.phone || d.user.whatsapp || '',
+          address_1: prev.address_1 || b.address_1 || '',
+          address_2: prev.address_2 || b.address_2 || '',
+          city: prev.city || b.city || '',
+          state: prev.state || b.state || '',
+          postcode: prev.postcode || b.postcode || '',
+          country: b.country || prev.country || 'PK',
+        }))
+      })
+      .catch(() => { if (active) setAuthed(false) })
+    return () => { active = false }
+  }, [])
 
   function updateBilling(key: keyof AddressFields, value: string) {
     setBilling((prev) => ({ ...prev, [key]: value }))
     if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }))
   }
-  function updateShipping(key: keyof AddressFields, value: string) {
-    setShipping((prev) => ({ ...prev, [key]: value }))
+
+  // ── Order summary edits (remove item / coupons) ──
+  const [busyKey, setBusyKey] = useState<string | null>(null)
+  const [couponCode, setCouponCode] = useState('')
+  const [couponError, setCouponError] = useState<string | null>(null)
+  const [couponPending, setCouponPending] = useState(false)
+
+  async function handleRemoveItem(key: string) {
+    setBusyKey(key)
+    try {
+      setCart(await removeItem(key))
+    } catch {
+      /* leave cart as-is */
+    } finally {
+      setBusyKey(null)
+    }
+  }
+
+  async function handleApplyCoupon() {
+    const code = couponCode.trim()
+    if (!code) return
+    setCouponPending(true)
+    setCouponError(null)
+    try {
+      setCart(await applyCoupon(code))
+      setCouponCode('')
+    } catch (err) {
+      setCouponError(err instanceof Error ? err.message : 'This code can’t be applied.')
+    } finally {
+      setCouponPending(false)
+    }
+  }
+
+  async function handleRemoveCoupon(code: string) {
+    setCouponPending(true)
+    try {
+      setCart(await removeCoupon(code))
+    } catch {
+      /* ignore */
+    } finally {
+      setCouponPending(false)
+    }
+  }
+
+  const summaryHandlers = {
+    onRemoveItem: handleRemoveItem,
+    busyKey,
+    couponCode,
+    setCouponCode,
+    onApplyCoupon: handleApplyCoupon,
+    onRemoveCoupon: handleRemoveCoupon,
+    couponError,
+    couponPending,
   }
 
   function validate(): boolean {
@@ -194,6 +273,12 @@ export function CheckoutClient() {
           shipping: shippingSame ? undefined : shipping,
           payment_method: paymentMethod,
           customer_note: customerNote,
+          items: (cart?.items ?? []).map((i) => ({
+            productId: i.productId,
+            variationId: i.variationId,
+            quantity: i.quantity,
+          })),
+          coupons: (cart?.discounts ?? []).map((d) => d.code),
         }),
       })
 
@@ -218,9 +303,13 @@ export function CheckoutClient() {
         giftWrapEnabled: false, giftWrapCost: 'Rs. 150',
       })
 
-      // If payment gateway requires redirect
-      if (data.payment_redirect) {
-        window.location.href = data.payment_redirect
+      // Only follow a redirect for true external payment gateways.
+      // COD/bank transfer return WooCommerce's own "order-received" page —
+      // we ignore that and show our branded confirmation instead.
+      const redirect = data.payment_redirect
+      const isExternalGateway = !!redirect && !/order-received/i.test(redirect)
+      if (isExternalGateway) {
+        window.location.href = redirect!
         return
       }
 
@@ -257,6 +346,21 @@ export function CheckoutClient() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
+            {/* Optional sign-in nudge — guest checkout stays the default path below */}
+            {authed === false && (
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2 px-4 py-3 rounded-card border border-hairline bg-ivory">
+                <p className="font-body text-sm text-stone">
+                  Checking out as a guest. Have an account?
+                </p>
+                <Link
+                  href="/account/login?next=/checkout"
+                  className="font-body text-sm font-semibold text-wine hover:text-wine-deep transition-colors"
+                >
+                  Sign in for faster checkout →
+                </Link>
+              </div>
+            )}
+
             <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-10 xl:gap-14">
 
               {/* ── LEFT COLUMN ─────────────────────── */}
@@ -283,7 +387,7 @@ export function CheckoutClient() {
                 {/* Mobile summary (collapsible) */}
                 {summaryOpen && (
                   <div className="lg:hidden">
-                    <OrderSummaryContent cart={cart} />
+                    <OrderSummaryContent cart={cart} {...summaryHandlers} />
                   </div>
                 )}
 
@@ -441,7 +545,7 @@ export function CheckoutClient() {
               {/* ── RIGHT COLUMN (desktop) ──────────── */}
               <div className="hidden lg:block">
                 <div className="sticky top-6">
-                  <OrderSummaryContent cart={cart} />
+                  <OrderSummaryContent cart={cart} {...summaryHandlers} />
                 </div>
               </div>
             </div>
@@ -454,7 +558,22 @@ export function CheckoutClient() {
 
 /* ── Order Summary (shared mobile / desktop) ────── */
 
-function OrderSummaryContent({ cart }: { cart: CartData | null }) {
+interface SummaryProps {
+  cart: CartData | null
+  onRemoveItem: (key: string) => void
+  busyKey: string | null
+  couponCode: string
+  setCouponCode: (v: string) => void
+  onApplyCoupon: () => void
+  onRemoveCoupon: (code: string) => void
+  couponError: string | null
+  couponPending: boolean
+}
+
+function OrderSummaryContent({
+  cart, onRemoveItem, busyKey,
+  couponCode, setCouponCode, onApplyCoupon, onRemoveCoupon, couponError, couponPending,
+}: SummaryProps) {
   if (!cart) return null
   return (
     <div className="bg-ivory rounded-card border border-hairline overflow-hidden">
@@ -496,15 +615,67 @@ function OrderSummaryContent({ cart }: { cart: CartData | null }) {
                 {item.lineTotal}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => onRemoveItem(item.key)}
+              disabled={busyKey === item.key}
+              aria-label={`Remove ${item.name}`}
+              className="self-start -mr-1 flex items-center justify-center w-7 h-7 rounded-full text-stone hover:text-wine hover:bg-wine-tint transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine"
+            >
+              {busyKey === item.key
+                ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                : <X className="h-4 w-4" aria-hidden />}
+            </button>
           </li>
         ))}
       </ul>
 
+      {/* Coupon */}
+      <div className="px-5 py-4 border-t border-hairline">
+        <label htmlFor="coupon" className="flex items-center gap-1.5 font-body text-xs font-medium text-stone mb-2">
+          <Tag className="h-3.5 w-3.5" aria-hidden />
+          Discount code
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="coupon"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onApplyCoupon() } }}
+            placeholder="Enter code"
+            autoComplete="off"
+            className="flex-1 h-11 px-3.5 rounded-input border border-hairline bg-ivory font-body text-sm text-ink placeholder:text-stone/60 uppercase tracking-wide focus:outline-none focus:border-wine focus:ring-2 focus:ring-wine/20 transition-colors"
+          />
+          <button
+            type="button"
+            onClick={onApplyCoupon}
+            disabled={couponPending || !couponCode.trim()}
+            className="h-11 px-4 rounded-input border border-wine text-wine font-body text-sm font-semibold hover:bg-wine-tint transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          >
+            {couponPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : 'Apply'}
+          </button>
+        </div>
+        {couponError && (
+          <p role="alert" className="mt-2 font-body text-xs text-wine">{couponError}</p>
+        )}
+      </div>
+
       {/* Totals */}
       <div className="px-5 py-4 border-t border-hairline space-y-2">
         {cart.discounts.length > 0 && cart.discounts.map((d) => (
-          <div key={d.code} className="flex justify-between font-body text-sm">
-            <span className="text-stone">Discount ({d.code})</span>
+          <div key={d.code} className="flex justify-between items-center font-body text-sm">
+            <span className="flex items-center gap-1.5 text-stone">
+              Discount ({d.code})
+              <button
+                type="button"
+                onClick={() => onRemoveCoupon(d.code)}
+                disabled={couponPending}
+                aria-label={`Remove discount ${d.code}`}
+                className="text-stone hover:text-wine transition-colors disabled:opacity-50"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            </span>
             <span className="text-wine tabular-nums">−{d.amount}</span>
           </div>
         ))}

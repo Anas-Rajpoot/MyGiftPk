@@ -8,9 +8,10 @@
  *   product save / stock change  → product:{slug}  + category:{slug} for each category
  *   page save                    → page:{slug}
  *   blog post save               → post:{slug}
- *   ACF options: homepage        → home, global
- *   ACF options: global-options  → global
- *   ACF options: gift-builder    → gift-builder
+ *
+ * Native content managers (Homepage, Global, Gift Builder, FAQs, Careers,
+ * Category Intro) fire their own tags via fire_tags() on save — see each
+ * MYGIFT_Content_Base subclass. There is no ACF dependency.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -23,7 +24,6 @@ class MYGIFT_Revalidate_Webhook {
 		add_action( 'save_post_product',           array( __CLASS__, 'on_product_save'  ), 10, 2 );
 		add_action( 'save_post_page',              array( __CLASS__, 'on_page_save'     ), 10, 2 );
 		add_action( 'save_post_post',              array( __CLASS__, 'on_post_save'     ), 10, 2 );
-		add_action( 'acf/save_post',               array( __CLASS__, 'on_acf_save'      ), 20    );
 		add_action( 'woocommerce_reduce_order_stock', array( __CLASS__, 'on_stock_change' )       );
 	}
 
@@ -59,26 +59,6 @@ class MYGIFT_Revalidate_Webhook {
 			return;
 		}
 		self::fire( array( "post:{$post->post_name}" ) );
-	}
-
-	/**
-	 * ACF options pages save with a string $post_id like 'options' or the menu slug.
-	 * NOTE: strpos() used instead of str_contains() for PHP 7.4 compatibility.
-	 *
-	 * @param int|string $post_id
-	 */
-	public static function on_acf_save( $post_id ) {
-		if ( ! is_string( $post_id ) ) {
-			return;
-		}
-
-		if ( false !== strpos( $post_id, 'homepage' ) ) {
-			self::fire( array( 'home', 'global' ) );
-		} elseif ( false !== strpos( $post_id, 'gift-builder' ) ) {
-			self::fire( array( 'gift-builder' ) );
-		} elseif ( false !== strpos( $post_id, 'global' ) || 'options' === $post_id ) {
-			self::fire( array( 'global' ) );
-		}
 	}
 
 	public static function on_stock_change( $order ) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { setAuthCookie } from '@/lib/auth/server'
 import type { AuthUser } from '@/lib/auth/server'
 import { checkRateLimit } from '@/lib/utils/rate-limit'
+import { validateOrigin } from '@/lib/utils/csrf'
 
 const MOCK_MODE = process.env.MOCK_MODE === 'true'
 const WP_GRAPHQL_URL = process.env.WP_GRAPHQL_URL
@@ -26,6 +27,10 @@ const REGISTER_MUTATION = `
 `
 
 export async function POST(req: NextRequest) {
+  if (!validateOrigin(req)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
   if (!checkRateLimit(`register:${ip}`, 3, 60_000)) {
     return NextResponse.json(

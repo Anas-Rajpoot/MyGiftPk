@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { MOCK_MODE } from '@/lib/cart/route-helpers'
 import { validateOrigin } from '@/lib/utils/csrf'
 import type { GiftBuilderOptions } from '@/lib/wp/queries/gift'
+import { DEFAULT_GIFT_BUILDER } from '@/lib/wp/home-content'
 import type { CartData, CartLineItem } from '@/lib/cart/normalize'
 
 function sanitizeGiftMessage(input: string, maxLen = 200): string {
@@ -14,10 +15,6 @@ function sanitizeGiftMessage(input: string, maxLen = 200): string {
     .slice(0, maxLen)
 }
 
-// Fixture lookup at build time — safe because this is server-only
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { fixtures } = require('@/lib/wp/fixtures') as { fixtures: Record<string, unknown> }
-
 interface GiftPayload {
   boxId: number
   items: { productId: number; qty: number }[]
@@ -29,8 +26,7 @@ interface GiftPayload {
 }
 
 function getMockOptions(): GiftBuilderOptions | null {
-  const f = fixtures.GetGiftBuilderOptions as { giftBuilderOptions?: GiftBuilderOptions } | undefined
-  return f?.giftBuilderOptions ?? null
+  return DEFAULT_GIFT_BUILDER
 }
 
 export async function POST(req: NextRequest) {

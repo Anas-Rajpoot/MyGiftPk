@@ -11,7 +11,7 @@ import type { ProductNode } from '@/lib/wp/queries/products'
 
 interface ProductCardGridProps {
   products: ProductNode[]
-  columns?: 2 | 4
+  columns?: 2 | 3 | 4
 }
 
 export function ProductCardGrid({ products, columns = 4 }: ProductCardGridProps) {
@@ -63,8 +63,10 @@ export function ProductCardGrid({ products, columns = 4 }: ProductCardGridProps)
     <div
       className={
         columns === 2
-          ? 'grid grid-cols-2 gap-4 sm:gap-6'
-          : 'grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6'
+          ? 'grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'
+          : columns === 3
+          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
+          : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6'
       }
     >
       {products.map((p) => (

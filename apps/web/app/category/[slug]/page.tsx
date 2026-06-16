@@ -8,8 +8,10 @@ import {
   fetchWooCategory,
   fetchWooCategorySlugs,
   fetchWooProducts,
+  fetchWooAllCategories,
   WOO_REST_ENABLED,
 } from '@/lib/woo/rest-client'
+import { fetchCategoryIntro } from '@/lib/wp/home-content'
 import { parseFilters } from '@/lib/utils/filters'
 import type { RawSearchParams } from '@/lib/utils/filters'
 import { breadcrumbSchema, collectionPageSchema } from '@/lib/seo/schema'
@@ -17,7 +19,9 @@ import { FilterSidebar } from '@/components/shop/FilterSidebar'
 import { FilterBottomSheet } from '@/components/shop/FilterBottomSheet'
 import { ActiveFilters } from '@/components/shop/ActiveFilters'
 import { CategoryIntro } from '@/components/shop/CategoryIntro'
-import { ProductCardGrid } from '@/components/product/ProductCardGrid'
+import { ShopControls } from '@/components/shop/ShopControls'
+import { Pagination } from '@/components/shop/Pagination'
+import { RibbonHeading } from '@/components/ui/RibbonHeading'
 import type { CategoryData } from '@/lib/wp/queries/shop'
 
 interface Props {
@@ -81,35 +85,46 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+const PER_PAGE = 12
+
 export default async function CategoryPage({ params, searchParams }: Props) {
   const [{ slug }, raw] = await Promise.all([params, searchParams])
   const filters = parseFilters(raw)
   const basePath = `/category/${slug}`
+  const currentPage = Math.max(1, parseInt(filters.page ?? '1', 10))
 
   let cat: CategoryData | null = null
   let nodes: ProductNode[] = []
   let found = 0
+  let allCategories: Array<{ slug: string; name: string; count: number }> = []
 
   if (WOO_REST_ENABLED) {
-    [cat] = await Promise.all([fetchWooCategory(slug)])
-    if (!cat) notFound()
-
-    const result = await fetchWooProducts({
-      first: 16,
-      category: slug,
-      onSale: filters.on_sale === '1' ? true : undefined,
-      type: filters.type,
-      size: filters.size,
-      sort: filters.sort,
-    })
+    const [fetchedCat, result, categories] = await Promise.all([
+      fetchWooCategory(slug),
+      fetchWooProducts({
+        first: PER_PAGE,
+        page: currentPage,
+        category: slug,
+        onSale: filters.on_sale === '1' ? true : undefined,
+        type: filters.type,
+        size: filters.size,
+        sort: filters.sort,
+        minPrice: filters.min_price ? parseFloat(filters.min_price) : undefined,
+        maxPrice: filters.max_price ? parseFloat(filters.max_price) : undefined,
+      }),
+      fetchWooAllCategories(true),
+    ])
+    if (!fetchedCat) notFound()
+    cat = fetchedCat
     nodes = result.nodes
     found = result.found
+    allCategories = categories
   } else {
     const data = await fetchGraphQL<CategoryPageData>(
       GET_CATEGORY_WITH_PRODUCTS,
       {
         slug,
-        first: 16,
+        first: PER_PAGE,
         type: filters.type,
         onSale: filters.on_sale === '1' ? true : undefined,
       },
@@ -123,6 +138,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   if (!cat) notFound()
 
+  const intro = await fetchCategoryIntro(slug)
+  const totalPages = Math.ceil(found / PER_PAGE)
+
   const breadcrumb = breadcrumbSchema([
     { name: 'Home', url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk' },
     { name: cat.name, url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'}${basePath}` },
@@ -134,36 +152,35 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }} />
 
-      <div className="max-w-[1320px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        {cat.acfCategoryIntro?.intro ? (
-          <div className="mb-6">
-            <CategoryIntro name={cat.name} intro={cat.acfCategoryIntro.intro} count={found} />
-          </div>
-        ) : (
-          <h1 className="font-display text-2xl sm:text-3xl uppercase tracking-wide text-ink mb-6">
-            {cat.name}
-            <span className="ml-3 font-body text-base font-normal text-stone normal-case tracking-normal">
-              {found} products
-            </span>
-          </h1>
-        )}
+      <div className="max-w-[1320px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Heading */}
+        <div className="mb-8">
+          {intro ? (
+            <CategoryIntro name={cat.name} intro={intro} count={found} />
+          ) : (
+            <RibbonHeading as="h1" className="text-2xl sm:text-3xl">
+              {cat.name.toUpperCase()}
+            </RibbonHeading>
+          )}
+        </div>
 
-        <div className="flex gap-8">
-          <FilterSidebar basePath={basePath} filters={filters} />
+        <div className="flex gap-8 lg:gap-10">
+          <FilterSidebar basePath={basePath} filters={filters} categories={allCategories} />
 
           <div className="flex-1 min-w-0 space-y-4">
             <div className="flex flex-wrap items-center gap-3">
-              <FilterBottomSheet basePath={basePath} filters={filters} />
+              <FilterBottomSheet basePath={basePath} filters={filters} categories={allCategories} />
               <ActiveFilters basePath={basePath} filters={filters} />
             </div>
 
-            {nodes.length === 0 ? (
-              <div className="py-20 text-center">
-                <p className="font-body text-stone text-base">No products found for these filters.</p>
-              </div>
-            ) : (
-              <ProductCardGrid products={nodes} />
-            )}
+            <ShopControls products={nodes} found={found} />
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              basePath={basePath}
+              filters={filters}
+            />
           </div>
         </div>
       </div>

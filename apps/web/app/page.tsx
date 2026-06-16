@@ -1,19 +1,19 @@
 import type { Metadata } from 'next'
-import { fetchGraphQL } from '@/lib/wp/client'
-import { GET_HOME_PAGE } from '@/lib/wp/queries/home'
+import { fetchGraphQLSafe } from '@/lib/wp/client'
+import { GET_HOME_SEO } from '@/lib/wp/queries/home'
 import type { HomePageData } from '@/lib/wp/queries/home'
-import { fetchHomeContent } from '@/lib/wp/home-content'
+import { fetchHomeContent, DEFAULT_HOME_CONTENT } from '@/lib/wp/home-content'
 import { HomeBlockRenderer } from '@/components/home/HomeBlockRenderer'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const data = await fetchGraphQL<HomePageData>(
-    GET_HOME_PAGE,
+  const data = await fetchGraphQLSafe<HomePageData>(
+    GET_HOME_SEO,
     {},
     { tags: ['home', 'global'], revalidate: 3600 }
   )
-  const seo = data.page?.seo
+  const seo = data?.page?.seo
 
   const title = seo?.title || 'MYGIFT — Gifts & Clothing Delivered Across Pakistan'
   const description =
@@ -42,12 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [data, homeContent] = await Promise.all([
-    fetchGraphQL<HomePageData>(GET_HOME_PAGE, {}, { tags: ['home', 'global'], revalidate: 3600 }),
-    fetchHomeContent(),
-  ])
+  const homeContent = (await fetchHomeContent()) ?? DEFAULT_HOME_CONTENT
 
-  const blocks = data.page?.homepageBuilder?.blocks ?? []
-
-  return <HomeBlockRenderer blocks={blocks} homeContent={homeContent} />
+  return <HomeBlockRenderer blocks={homeContent.blocks} />
 }

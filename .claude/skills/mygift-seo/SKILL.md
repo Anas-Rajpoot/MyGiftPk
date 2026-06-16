@@ -26,7 +26,7 @@ Every route exports `generateMetadata()`:
 | /product/[slug] | Product: name, image[], description, sku, brand "MYGIFT", Offer (priceCurrency PKR, price, availability from stockStatus, url, itemCondition New) + AggregateRating/Review when reviews exist |
 | /shop, /category/* | CollectionPage + ItemList (position, url, name of visible products) |
 | All inner pages | BreadcrumbList matching visible breadcrumbs |
-| /gifts/[occasion], /faqs | FAQPage (real Q/A from ACF) |
+| /gifts/[occasion], /faqs | FAQPage (real Q/A from the native FAQs manager, `fetchFaqItems`) |
 | /blog/[slug] | Article (headline, image, datePublished/Modified, author) |
 | Contact/about | LocalBusiness if physical address exists |
 
@@ -58,7 +58,8 @@ Validate every type in Google Rich Results Test before marking a phase done.
 
 - Exactly ONE H1 per page (RibbonHeading as="h1"); section titles are H2s.
 - Every image: meaningful alt (admin-required field; fallback to product name).
-- Category pages: editable ACF intro paragraph above the grid (collapsible after
+- Category pages: editable "Storefront Intro" paragraph above the grid (the native
+  category-intro term meta via `fetchCategoryIntro`; collapsible after
   3 lines) — keyword-rich, written by admin.
 - Internal linking: breadcrumbs everywhere; related products; occasion pages
   cross-link to relevant categories; blog posts link to products/categories.

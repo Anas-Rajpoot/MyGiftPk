@@ -14,14 +14,14 @@ quality bar is "delightful", not "works".
 Progress: the ribbon-line component in --gold, fills per step.
 Sticky price ticker visible at ALL times (bottom bar on mobile), updating live.
 
-1. **Choose Box** — box cards from ACF: image, name, capacity ("fits up to 4
+1. **Choose Box** — box cards from Gift Builder settings: image, name, capacity ("fits up to 4
    items"), base price. Selecting sets capacity + base.
 2. **Fill It** — component grid, tabs per allowed category (Chocolates / Candies /
-   Biscuits / Extras) from ACF; tap to add, qty steppers on added items; bottom
+   Biscuits / Extras) from the Gift Builder settings; tap to add, qty steppers on added items; bottom
    tray: thumbnails of chosen items + "3/4 slots". At capacity: disable adds +
    friendly message ("Your box is full — pick a bigger box or swap something").
 3. **Personalize** — card message (live preview rendered on a card mockup, char
-   limit from ACF, default 200), ribbon color swatches, optional photo-print
+   limit from Gift Builder settings, default 200), ribbon color swatches, optional photo-print
    add-on (upload stub), occasion tag select.
 4. **Review** — visual stack (box + items + card), itemized prices, total →
    **Add Gift to Cart**.
@@ -72,9 +72,11 @@ Server steps (all mandatory):
 - Customer emails: same expanded list under the bundle line.
 - Printable packing slip per order (button on order screen): bundle contents,
   message text (large), recipient address, hide-prices flag respected.
-- ACF Options "Gift Builder": boxes[] (name, image, base_price, capacity),
-  allowed_categories[], add_ons[] (name, price), message_char_limit. All exposed
-  via GraphQL, cache tag `gift-builder`.
+- Native "Gift Builder" settings screen (MYGIFT → Gift Builder, class
+  `MYGIFT_Gift_Builder_Settings`): boxes[] (name, image, base_price, capacity),
+  component category slugs, add_ons[] (name, price), message_char_limit, ribbon
+  colours, occasions. Exposed at `GET /wp-json/mygift/v1/gift-builder` (component
+  products read LIVE from WooCommerce); cache tag `gift-builder`. No ACF.
 
 ## 6. Catalog rules
 

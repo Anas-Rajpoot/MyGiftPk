@@ -31,6 +31,36 @@
 **Decision:** `lib/auth/server.ts` throws at call-time in production if `JWT_SECRET` env var is missing, rather than silently using a public fallback string.
 **Rationale:** A public fallback secret lets any attacker forge auth tokens. In development, the fallback is still used to avoid blocking local dev. `JWT_SECRET` must be set in all production deployments.
 
+## D-009: Drop ACF Pro — native mygift-core content managers (2026-06-16)
+**Decision:** Remove the paid **ACF Pro + WPGraphQL-for-ACF** dependency entirely. All
+editor-managed content (homepage builder, global settings, gift builder, FAQs, careers,
+category intros) is now stored and edited **natively in the free mygift-core plugin**
+(Settings API + term meta) and exposed to Next.js over a small REST API under
+`/wp-json/mygift/v1/*`. The frontend reads it via `lib/wp/home-content.ts`
+(`fetchHomeContent`, `fetchGlobalOptions`, `fetchGiftBuilderOptions`, `fetchFaqItems`,
+`fetchJobListings`, `fetchCategoryIntro`), each with `DEFAULT_*` fallbacks for
+MOCK_MODE / WP-down. WPGraphQL/WooGraphQL is retained for the product catalogue only;
+Yoast for SEO.
+
+**Path chosen (vs. SCF):** The user chose to extend the already-started native approach
+(commit `7ba35a6` had moved home content off ACF natively) rather than adopt SCF + the
+WPGraphQL-for-ACF bridge. **Verification note (STEP 0):** SCF compatibility could NOT be
+verified — no access to the staging WP install from the dev environment, and the
+WPGraphQL-for-ACF bridge has historically had gaps resolving SCF Flexible Content. The
+native path removes that risk entirely (zero third-party content plugins) and is the
+robust headless choice. **Reproducibility (replaces STEP 5):** no SCF field-group JSON to
+export — the field structure IS the version-controlled PHP in
+`wp-plugin/mygift-core/includes/`; rebuilding the WP install only requires installing the
+plugin (it self-seeds defaults on activation).
+
+**Admin UX:** one branded **MYGIFT Control Center** top-level menu (wine icon) gathers all
+screens + a dashboard (counts, quick links, help). Each manager fires its revalidation
+tags on save; the old `acf/save_post` webhook hook was removed.
+**Plugin:** mygift-core v0.5.0. **Files:** `includes/class-content-base.php`,
+`class-home-content.php`, `class-global-settings.php`, `class-gift-builder-settings.php`,
+`class-faqs.php`, `class-careers.php`, `class-category-intro.php`, `class-control-center.php`,
+`assets/admin.{css,js}`.
+
 ## D-008: Webhook replay guard — optional timestamp window (2026-06-12)
 **Decision:** `app/api/revalidate/route.ts` accepts an optional `timestamp` field in the request body and rejects requests whose timestamp differs from server time by more than 5 minutes.
 **Rationale:** Prevents replay attacks where a captured revalidation webhook is replayed later. The check is opt-in (absent timestamp = no check) for backwards compatibility with the WP plugin before it's updated to send timestamps.

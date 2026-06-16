@@ -23,7 +23,7 @@ export interface CheckoutAddress {
   address_1: string
   address_2: string
   city: string
-  state: string        // WooCommerce state code e.g. "PK-PB"
+  state: string        // WooCommerce state code e.g. "PB"
   postcode: string
   country: string      // ISO 2-letter e.g. "PK"
   email?: string       // billing only
@@ -69,6 +69,8 @@ export interface RestOrderPayload {
   shipping: Omit<CheckoutAddress, 'email'>
   line_items: RestLineItem[]
   customer_note: string
+  customer_id?: number
+  coupon_lines?: { code: string }[]
   meta_data?: { key: string; value: string }[]
 }
 
@@ -83,13 +85,14 @@ export interface RestOrderResponse {
 /* ── Pakistan provinces (WooCommerce state codes) */
 
 export const PK_PROVINCES: { code: string; label: string }[] = [
-  { code: 'PK-PB', label: 'Punjab' },
-  { code: 'PK-SD', label: 'Sindh' },
-  { code: 'PK-KP', label: 'Khyber Pakhtunkhwa' },
-  { code: 'PK-BA', label: 'Balochistan' },
-  { code: 'PK-IS', label: 'Islamabad Capital Territory' },
-  { code: 'PK-JK', label: 'Azad Jammu & Kashmir' },
-  { code: 'PK-GB', label: 'Gilgit-Baltistan' },
+  { code: 'PB', label: 'Punjab' },
+  { code: 'SD', label: 'Sindh' },
+  { code: 'KP', label: 'Khyber Pakhtunkhwa' },
+  { code: 'BA', label: 'Balochistan' },
+  { code: 'IS', label: 'Islamabad Capital Territory' },
+  { code: 'JK', label: 'Azad Jammu & Kashmir' },
+  { code: 'GB', label: 'Gilgit-Baltistan' },
+  { code: 'TA', label: 'FATA' },
 ]
 
 /* ── Store API checkout ─────────────────────────── */

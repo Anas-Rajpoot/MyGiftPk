@@ -1,43 +1,9 @@
-export const GET_GLOBAL_OPTIONS = `
-  query GetGlobalOptions {
-    globalOptions {
-      announcementBar {
-        enabled
-        text
-        link
-      }
-      freeShippingThreshold
-      giftWrapPrice
-      headerMenu {
-        label
-        link
-        children {
-          label
-          link
-        }
-      }
-      footer {
-        columns {
-          heading
-          links {
-            label
-            href
-          }
-        }
-        socials {
-          instagram
-          facebook
-          whatsapp
-        }
-        contact {
-          phone
-          email
-        }
-        bottomText
-      }
-    }
-  }
-`
+/**
+ * Global settings (free-shipping threshold, gift-wrap price, footer, socials,
+ * contact) are now read from the native mygift-core REST endpoint via
+ * lib/wp/home-content.ts (`fetchGlobalOptions`). The interfaces below remain
+ * the shared shape for those values and the footer components.
+ */
 
 export interface NavLink {
   label: string

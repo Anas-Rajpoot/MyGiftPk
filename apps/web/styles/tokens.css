@@ -15,6 +15,7 @@
 
   /* Third-party brand colors (used only where integration requires it) */
   --whatsapp: #25D366;
+  --whatsapp-deep: #20b957;
 
   /* Semantic feedback colors (toast/alert states) */
   --success: #2E7D32;

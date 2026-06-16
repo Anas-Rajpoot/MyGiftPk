@@ -79,6 +79,33 @@ function ConfirmationContent() {
           </div>
         )}
 
+        {/* What happens next */}
+        <div className="bg-ivory border border-hairline rounded-card px-6 py-5 mb-6">
+          <p className="font-body text-xs uppercase tracking-[0.18em] text-stone font-semibold mb-4">
+            What happens next
+          </p>
+          <ol className="space-y-4">
+            {[
+              { icon: CheckCircle2, title: 'Order confirmed', desc: 'We’ve received your order and sent a confirmation email.' },
+              { icon: Package, title: 'Packed with care', desc: 'Your items are prepared and sealed for dispatch.' },
+              { icon: Truck, title: 'On its way', desc: 'You’ll get a tracking link once your order ships.' },
+            ].map(({ icon: Icon, title, desc }, i, arr) => (
+              <li key={title} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-wine-tint flex items-center justify-center shrink-0">
+                    <Icon className="h-4 w-4 text-wine" aria-hidden />
+                  </div>
+                  {i < arr.length - 1 && <div className="w-px flex-1 bg-hairline mt-1" />}
+                </div>
+                <div className="pb-1">
+                  <p className="font-body text-sm font-semibold text-ink">{title}</p>
+                  <p className="font-body text-xs text-stone mt-0.5 leading-relaxed">{desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
         {/* Confirmation email note */}
         <p className="font-body text-sm text-stone text-center mb-8">
           A confirmation email will be sent to your inbox shortly.

@@ -16,18 +16,9 @@ class MYGIFT_Settings {
     const OPTION_KEY = 'mygift_core_settings';
 
     public static function init() {
-        add_action( 'admin_menu',  [ __CLASS__, 'add_menu' ] );
+        // The page itself is registered under the MYGIFT Control Center menu
+        // (see class-control-center.php); here we only register the settings.
         add_action( 'admin_init',  [ __CLASS__, 'register_settings' ] );
-    }
-
-    public static function add_menu() {
-        add_options_page(
-            'MYGIFT Core',
-            'MYGIFT Core',
-            'manage_options',
-            'mygift-core',
-            [ __CLASS__, 'render_page' ]
-        );
     }
 
     public static function register_settings() {

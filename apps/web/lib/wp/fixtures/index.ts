@@ -18,137 +18,44 @@ const MOCK_VARIATION_NODES = ['Stitched', 'Unstitched'].flatMap((type, ti) =>
   }))
 )
 
-const MOCK_PRODUCTS = Array.from({ length: 8 }, (_, i) => ({
+const MOCK_PRODUCT_NAMES = [
+  'Red Lawn 3-Piece Unstitched',
+  'Ivory Embroidered Kurta',
+  'Navy Blue Chiffon Suit',
+  'Rose Pink Lawn Dupatta Set',
+  'Teal Linen 2-Piece',
+  'Classic White Kurta Shalwar',
+  'Mustard Printed Shirt',
+  'Charcoal Khaddar 3-Piece',
+  'Sage Green Silk Dupatta',
+  'Burgundy Embroidered Shirt',
+  'Sky Blue Cotton Shalwar Set',
+  'Peach Chiffon Formal Suit',
+  'Forest Green Block Print Kurta',
+  'Lavender Organza 3-Piece',
+  'Camel Brown Linen Coordinate',
+  'Midnight Black Party Wear',
+]
+
+const MOCK_PRODUCTS = Array.from({ length: 16 }, (_, i) => ({
   id: `product-${i + 1}`,
   databaseId: i + 1,
   slug: `mock-product-${i + 1}`,
-  name: [
-    'Red Lawn 3-Piece Unstitched',
-    'Ivory Embroidered Kurta',
-    'Navy Blue Chiffon Suit',
-    'Rose Pink Lawn Dupatta Set',
-    'Teal Linen 2-Piece',
-    'Classic White Kurta Shalwar',
-    'Mustard Printed Shirt',
-    'Charcoal Khaddar 3-Piece',
-  ][i],
+  name: MOCK_PRODUCT_NAMES[i],
   type: 'SIMPLE',
   image: null,
   galleryImages: { nodes: [] },
-  price: `Rs. ${(i + 1) * 1500}`,
-  regularPrice: `Rs. ${(i + 1) * 1500}`,
-  salePrice: i % 3 === 0 ? `Rs. ${Math.round((i + 1) * 1200)}` : null,
-  onSale: i % 3 === 0,
+  price: `Rs. ${(i + 1) * 1200}`,
+  regularPrice: `Rs. ${(i + 1) * 1200}`,
+  salePrice: i % 4 === 0 ? `Rs. ${Math.round((i + 1) * 950)}` : null,
+  onSale: i % 4 === 0,
   stockStatus: 'IN_STOCK',
-  productCategories: { nodes: [{ slug: 'women', name: 'Women' }] },
+  productCategories: { nodes: [{ slug: i < 8 ? 'women' : 'men', name: i < 8 ? 'Women' : 'Men' }] },
   attributes: { nodes: [] },
 }))
 
 export const fixtures: Record<string, unknown> = {
-  GetGlobalOptions: {
-    globalOptions: {
-      announcementBar: {
-        enabled: true,
-        text: 'Free shipping on orders over Rs. 3,000 · Nationwide delivery',
-        link: '/shop',
-      },
-      freeShippingThreshold: 3000,
-      giftWrapPrice: 150,
-      headerMenu: [
-        {
-          label: 'Women',
-          link: '/category/women',
-          children: [
-            { label: 'Stitched', link: '/category/women?type=stitched' },
-            { label: 'Unstitched', link: '/category/women?type=unstitched' },
-            { label: 'Lawn', link: '/category/women?tag=lawn' },
-            { label: 'Chiffon', link: '/category/women?tag=chiffon' },
-            { label: 'Khaddar', link: '/category/women?tag=khaddar' },
-            { label: 'All Women', link: '/category/women' },
-          ],
-        },
-        {
-          label: 'Men',
-          link: '/category/men',
-          children: [
-            { label: 'Stitched', link: '/category/men?type=stitched' },
-            { label: 'Unstitched', link: '/category/men?type=unstitched' },
-            { label: 'Kurta Shalwar', link: '/category/men?tag=kurta-shalwar' },
-            { label: 'All Men', link: '/category/men' },
-          ],
-        },
-        {
-          label: 'Kids',
-          link: '/category/kids',
-          children: [
-            { label: 'Girls', link: '/category/kids?tag=girls' },
-            { label: 'Boys', link: '/category/kids?tag=boys' },
-            { label: 'All Kids', link: '/category/kids' },
-          ],
-        },
-        {
-          label: 'Gifts',
-          link: '/gifts',
-          children: [
-            { label: 'Build a Gift', link: '/gift-builder' },
-            { label: 'Ready Gifts', link: '/gifts' },
-            { label: 'Birthday', link: '/gifts/birthday' },
-            { label: 'Eid', link: '/gifts/eid' },
-            { label: 'Anniversary', link: '/gifts/anniversary' },
-            { label: 'All Occasions', link: '/gifts' },
-          ],
-        },
-      ],
-      footer: {
-        columns: [
-          {
-            heading: 'Shop',
-            links: [
-              { label: 'Women', href: '/category/women' },
-              { label: 'Men', href: '/category/men' },
-              { label: 'Kids', href: '/category/kids' },
-              { label: 'Gifts', href: '/gifts' },
-              { label: 'Gift Builder', href: '/gift-builder' },
-              { label: 'Sale', href: '/shop?on_sale=1' },
-            ],
-          },
-          {
-            heading: 'Help',
-            links: [
-              { label: 'Track Your Order', href: '/track-order' },
-              { label: 'Shipping & Delivery', href: '/shipping' },
-              { label: 'Returns & Exchanges', href: '/returns' },
-              { label: 'Size Guide', href: '/size-guide' },
-              { label: 'FAQs', href: '/faqs' },
-              { label: 'Contact Us', href: '/contact' },
-            ],
-          },
-          {
-            heading: 'Company',
-            links: [
-              { label: 'About MYGIFT', href: '/about' },
-              { label: 'Blog', href: '/blog' },
-              { label: 'Careers', href: '/careers' },
-              { label: 'Privacy Policy', href: '/privacy' },
-              { label: 'Terms & Conditions', href: '/terms' },
-            ],
-          },
-        ],
-        socials: {
-          instagram: 'https://instagram.com/mygift.pk',
-          facebook: 'https://facebook.com/mygift.pk',
-          whatsapp: 'https://wa.me/923000000000',
-        },
-        contact: {
-          phone: '+92 300 000 0000',
-          email: 'hello@mygift.pk',
-        },
-        bottomText: '© 2025 MYGIFT. All rights reserved.',
-      },
-    },
-  },
-
-  GetHomePage: {
+  GetHomeSeo: {
     page: {
       seo: {
         title: 'MYGIFT — Gifts & Clothing Delivered Across Pakistan',
@@ -159,90 +66,6 @@ export const fixtures: Record<string, unknown> = {
         opengraphDescription:
           'Clothing and custom gift boxes delivered across Pakistan.',
         opengraphImage: null,
-      },
-      homepageBuilder: {
-        blocks: [
-          {
-            fieldGroupName: 'hero_slider',
-            slides: [
-              {
-                desktopImage: { sourceUrl: '/placeholder-hero-desktop.jpg', altText: 'MYGIFT Collection' },
-                mobileImage: { sourceUrl: '/placeholder-hero-mobile.jpg', altText: 'MYGIFT Collection' },
-                heading: 'GIFTS THAT FEEL LIKE HOME',
-                subtext: 'Clothing & custom gift boxes delivered across Pakistan',
-                ctaLabel: 'Shop Now',
-                ctaLink: '/shop',
-              },
-              {
-                desktopImage: { sourceUrl: '/placeholder-hero-desktop-2.jpg', altText: 'Build a Gift' },
-                mobileImage: { sourceUrl: '/placeholder-hero-mobile-2.jpg', altText: 'Build a Gift' },
-                heading: 'BUILD A GIFT THEY\'LL TREASURE',
-                subtext: 'Choose a box, fill it with love, add a personal message',
-                ctaLabel: 'Build a Gift',
-                ctaLink: '/gift-builder',
-              },
-              {
-                desktopImage: { sourceUrl: '/placeholder-hero-desktop-3.jpg', altText: 'New Arrivals' },
-                mobileImage: { sourceUrl: '/placeholder-hero-mobile-3.jpg', altText: 'New Arrivals' },
-                heading: 'NEW SEASON ARRIVALS',
-                subtext: 'Fresh lawn, chiffon & embroidered pieces now in store',
-                ctaLabel: 'View Collection',
-                ctaLink: '/category/women',
-              },
-            ],
-          },
-          {
-            fieldGroupName: 'category_tiles',
-            tiles: [
-              { slug: 'women', name: 'Women', image: null },
-              { slug: 'men', name: 'Men', image: null },
-              { slug: 'birthday', name: 'Birthday', image: null },
-              { slug: 'gifts', name: 'Gifts', image: null, link: '/gifts' },
-            ],
-          },
-          {
-            fieldGroupName: 'featured_tabs',
-            tabs: [
-              { id: 'new-arrivals', title: 'New Arrivals', categorySlug: 'women' },
-              { id: 'best-sellers', title: 'Best Sellers', categorySlug: 'men' },
-              { id: 'on-sale', title: 'On Sale', categorySlug: 'kids' },
-            ],
-          },
-          {
-            fieldGroupName: 'gift_banner',
-          },
-          {
-            fieldGroupName: 'occasion_chips',
-            chips: [
-              { label: 'Birthday', slug: 'birthday' },
-              { label: 'Anniversary', slug: 'anniversary' },
-              { label: 'Eid', slug: 'eid' },
-              { label: 'Wedding', slug: 'wedding' },
-              { label: 'Baby Shower', slug: 'baby-shower' },
-              { label: 'Graduation', slug: 'graduation' },
-              { label: "Mother's Day", slug: 'mothers-day' },
-              { label: "Father's Day", slug: 'fathers-day' },
-            ],
-          },
-          {
-            fieldGroupName: 'from_abroad_block',
-            heading: 'SENDING A GIFT FROM ABROAD?',
-            subtext:
-              'You\'re overseas. Your family is in Pakistan. We bridge that distance — order online, we deliver with love. Cash on delivery available for family to receive.',
-            image: null,
-            ctaLabel: 'Send a Gift Home',
-            ctaLink: '/gift-builder',
-          },
-          {
-            fieldGroupName: 'trust_row',
-            items: [
-              { icon: 'truck', heading: 'Free Shipping', subtext: 'On orders over Rs. 3,000 nationwide' },
-              { icon: 'gift', heading: 'Gift Wrapping', subtext: 'Premium wrapping for Rs. 150 per item' },
-              { icon: 'shield-check', heading: '100% Authentic', subtext: 'Verified clothing & quality guaranteed' },
-              { icon: 'map-pin', heading: 'Nationwide Delivery', subtext: 'Delivered to all cities across Pakistan' },
-            ],
-          },
-        ],
       },
     },
   },
@@ -266,26 +89,10 @@ export const fixtures: Record<string, unknown> = {
     },
   },
 
-  GetGiftBuilderConfig: {
-    giftBuilderOptions: {
-      boxes: [
-        { id: 1, name: 'Small Box', image: null, basePrice: 500, capacity: 4 },
-        { id: 2, name: 'Medium Box', image: null, basePrice: 800, capacity: 6 },
-        { id: 3, name: 'Large Box', image: null, basePrice: 1200, capacity: 10 },
-      ],
-      allowedCategories: ['chocolates', 'candies', 'biscuits', 'extras'],
-      addOns: [
-        { id: 1, name: 'Gift Card', price: 100 },
-        { id: 2, name: 'Ribbon Wrap', price: 150 },
-      ],
-      messageCharLimit: 200,
-    },
-  },
-
   GetShopProducts: {
     products: {
-      found: 8,
-      pageInfo: { hasNextPage: false },
+      found: 16,
+      pageInfo: { hasNextPage: true },
       nodes: MOCK_PRODUCTS,
     },
   },
@@ -298,9 +105,6 @@ export const fixtures: Record<string, unknown> = {
       description: 'Explore our curated women\'s collection — stitched and unstitched lawn, chiffon, and khaddar.',
       count: 24,
       image: null,
-      acfCategoryIntro: {
-        intro: 'Our women\'s collection blends traditional Pakistani fashion with everyday wearability. From vibrant summer lawns to elegant chiffon dupattas, each piece is crafted for the modern Pakistani woman.',
-      },
       seo: {
         title: 'Women\'s Clothing — Stitched & Unstitched | MYGIFT',
         metaDesc: 'Shop women\'s stitched and unstitched clothing. Lawn, chiffon, khaddar and more. Nationwide delivery across Pakistan.',
@@ -313,7 +117,7 @@ export const fixtures: Record<string, unknown> = {
     products: {
       found: 8,
       pageInfo: { hasNextPage: false },
-      nodes: MOCK_PRODUCTS,
+      nodes: MOCK_PRODUCTS.slice(0, 8),
     },
   },
 
@@ -396,36 +200,70 @@ export const fixtures: Record<string, unknown> = {
     },
   },
 
-  GetGiftBuilderOptions: {
-    giftBuilderOptions: {
-      boxes: [
-        { id: 1, name: 'Small Gift Box', image: null, basePrice: 500, capacity: 3 },
-        { id: 2, name: 'Medium Gift Box', image: null, basePrice: 800, capacity: 5 },
-        { id: 3, name: 'Large Gift Box', image: null, basePrice: 1200, capacity: 8 },
+  // ── Content pages ────────────────────────────────────────────────────────────
+
+  GetWpPage: {
+    page: {
+      id: 'page-about',
+      title: 'About MYGIFT',
+      content: '<p>Placeholder content for this page. In production this will be managed from WordPress.</p>',
+      date: '2024-01-01T00:00:00',
+      modified: '2025-01-01T00:00:00',
+      seo: {},
+    },
+  },
+
+  GetBlogPosts: {
+    posts: {
+      nodes: [
+        {
+          id: 'post-1',
+          slug: 'gift-ideas-for-eid',
+          title: '10 Thoughtful Gift Ideas for Eid',
+          excerpt: '<p>Eid is around the corner. Here are our top 10 gift ideas that work for every budget — from personalised gift boxes to premium lawn suits.</p>',
+          date: '2025-03-15T10:00:00',
+          featuredImage: null,
+          categories: { nodes: [{ slug: 'gift-ideas', name: 'Gift Ideas' }] },
+        },
+        {
+          id: 'post-2',
+          slug: 'how-to-measure-yourself',
+          title: 'How to Measure Yourself for a Perfect Fit',
+          excerpt: '<p>Getting the perfect fit for stitched clothing starts with accurate measurements. Follow our simple guide to measure bust, waist, hip and length at home.</p>',
+          date: '2025-02-20T09:00:00',
+          featuredImage: null,
+          categories: { nodes: [{ slug: 'style-tips', name: 'Style Tips' }] },
+        },
       ],
-      components: [
-        { productId: 101, name: 'Ferrero Rocher 3pc', image: null, price: 850, category: 'Chocolates', stockStatus: 'IN_STOCK', stockQuantity: 20 },
-        { productId: 102, name: 'Galaxy Chocolate Bar', image: null, price: 300, category: 'Chocolates', stockStatus: 'IN_STOCK', stockQuantity: 30 },
-        { productId: 103, name: 'Cadbury Dairy Milk', image: null, price: 250, category: 'Chocolates', stockStatus: 'IN_STOCK', stockQuantity: 25 },
-        { productId: 104, name: 'Toblerone 100g', image: null, price: 600, category: 'Chocolates', stockStatus: 'IN_STOCK', stockQuantity: 15 },
-        { productId: 201, name: 'Jolly Rancher Pack', image: null, price: 450, category: 'Candies', stockStatus: 'IN_STOCK', stockQuantity: 20 },
-        { productId: 202, name: 'Candy Cane Pack', image: null, price: 200, category: 'Candies', stockStatus: 'IN_STOCK', stockQuantity: 30 },
-        { productId: 203, name: 'Gummy Bears 100g', image: null, price: 350, category: 'Candies', stockStatus: 'IN_STOCK', stockQuantity: 20 },
-        { productId: 301, name: 'Oreo Pack', image: null, price: 300, category: 'Biscuits', stockStatus: 'IN_STOCK', stockQuantity: 25 },
-        { productId: 302, name: 'Lotus Biscoff Pack', image: null, price: 600, category: 'Biscuits', stockStatus: 'IN_STOCK', stockQuantity: 10 },
-        { productId: 303, name: 'Digestive Biscuits', image: null, price: 250, category: 'Biscuits', stockStatus: 'IN_STOCK', stockQuantity: 30 },
-        { productId: 401, name: 'Rose Petals Pack', image: null, price: 200, category: 'Extras', stockStatus: 'IN_STOCK', stockQuantity: 20 },
-        { productId: 402, name: 'Confetti Pack', image: null, price: 150, category: 'Extras', stockStatus: 'IN_STOCK', stockQuantity: 30 },
-        { productId: 403, name: 'Mini Plush Bear', image: null, price: 400, category: 'Extras', stockStatus: 'IN_STOCK', stockQuantity: 15 },
+      pageInfo: { hasNextPage: false, endCursor: null },
+    },
+  },
+
+  GetBlogPost: {
+    post: {
+      id: 'post-1',
+      slug: 'gift-ideas-for-eid',
+      title: '10 Thoughtful Gift Ideas for Eid',
+      content: '<p>Eid is a time of joy, family and giving. Whether you are shopping for parents, siblings or friends, we have put together a list of our most loved gift options.</p><h2>1. Personalised Gift Box</h2><p>Our Gift Builder lets you create a completely custom gift box filled with chocolates, candies, and a personal message card. Perfect for near and far.</p><h2>2. Premium Lawn 3-Piece Suit</h2><p>Give the gift of beautiful clothing — our embroidered lawn suits make a thoughtful and practical gift that any woman would love.</p>',
+      excerpt: '<p>Eid is around the corner. Here are our top 10 gift ideas that work for every budget.</p>',
+      date: '2025-03-15T10:00:00',
+      modified: '2025-03-15T10:00:00',
+      author: { node: { name: 'MYGIFT Team' } },
+      featuredImage: null,
+      categories: { nodes: [{ slug: 'gift-ideas', name: 'Gift Ideas' }] },
+      seo: {
+        title: '10 Thoughtful Gift Ideas for Eid | MYGIFT Blog',
+        metaDesc: 'Discover 10 thoughtful Eid gift ideas from MYGIFT — from personalised gift boxes to premium lawn suits.',
+      },
+    },
+  },
+
+  GetBlogSlugs: {
+    posts: {
+      nodes: [
+        { slug: 'gift-ideas-for-eid' },
+        { slug: 'how-to-measure-yourself' },
       ],
-      addOns: [
-        { id: 1, name: 'Photo Print', price: 500 },
-        { id: 2, name: 'Premium Ribbon', price: 300 },
-      ],
-      categories: ['Chocolates', 'Candies', 'Biscuits', 'Extras'],
-      messageCharLimit: 200,
-      ribbonColors: ['Wine Red', 'Gold', 'Ivory', 'Navy', 'Blush Pink', 'Sage Green'],
-      occasions: ['Birthday', 'Anniversary', 'Eid', "Mother's Day", 'Baby Shower', 'Wedding', 'Just Because'],
     },
   },
 }
