@@ -66,7 +66,7 @@ export function productSchema(product: ProductFull) {
     offers: {
       '@type': 'Offer',
       priceCurrency: 'PKR',
-      price: parseFloat((product.salePrice ?? product.price ?? '0').replace(/[^\d.]/g, '')) || undefined,
+      price: parseFloat((product.salePrice ?? product.price ?? '0').replace(/[^0-9]/g, '')) || undefined,
       availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       url,
       itemCondition: 'https://schema.org/NewCondition',
