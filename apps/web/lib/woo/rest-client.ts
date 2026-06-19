@@ -91,31 +91,59 @@ interface WooRestAttributeTerm {
 
 // Statuses worth retrying: rate-limit (429) and transient server/proxy errors.
 const RETRYABLE = new Set([429, 502, 503, 504])
-const MAX_RETRIES = 4
+const MAX_RETRIES = 6
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 /**
- * fetch() against the Woo REST API with exponential backoff on 429/5xx.
- * During static generation the build fires many product requests in a burst;
- * the host rate-limits with 429, which would otherwise abort the whole build.
- * Honours the `Retry-After` header when present, else backs off 0.5s,1s,2s,4s.
+ * Global concurrency gate. Next.js renders many pages in parallel during static
+ * generation, each firing several Woo requests; left unbounded that burst trips
+ * the host's 429 rate-limit and aborts the build. Cap in-flight Woo requests so
+ * the API is never stampeded — at runtime this is effectively a no-op.
+ */
+const MAX_CONCURRENT = 4
+let active = 0
+const waiters: Array<() => void> = []
+
+async function acquire(): Promise<void> {
+  if (active < MAX_CONCURRENT) {
+    active++
+    return
+  }
+  return new Promise<void>((resolve) => waiters.push(resolve))
+}
+
+function release(): void {
+  const next = waiters.shift()
+  if (next) next() // hand the slot directly to the next waiter
+  else active--
+}
+
+/**
+ * fetch() against the Woo REST API: concurrency-capped, with jittered
+ * exponential backoff on 429/5xx. Honours `Retry-After` when present, else
+ * backs off ~0.5s,1s,2s,4s… plus random jitter so retries don't sync up.
  */
 async function wooFetch(url: string, label: string): Promise<Response> {
-  for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, {
-      headers: { Authorization: auth() },
-      next: { revalidate: 3600 },
-    })
-    if (res.ok || !RETRYABLE.has(res.status) || attempt >= MAX_RETRIES) {
-      if (!res.ok) throw new Error(`WooCommerce REST ${res.status}: ${label}`)
-      return res
+  await acquire()
+  try {
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(url, {
+        headers: { Authorization: auth() },
+        next: { revalidate: 3600 },
+      })
+      if (res.ok || !RETRYABLE.has(res.status) || attempt >= MAX_RETRIES) {
+        if (!res.ok) throw new Error(`WooCommerce REST ${res.status}: ${label}`)
+        return res
+      }
+      const retryAfter = Number(res.headers.get('Retry-After'))
+      const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+        ? retryAfter * 1000
+        : 500 * 2 ** attempt + Math.floor(Math.random() * 250)
+      await sleep(waitMs)
     }
-    const retryAfter = Number(res.headers.get('Retry-After'))
-    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
-      ? retryAfter * 1000
-      : 500 * 2 ** attempt
-    await sleep(waitMs)
+  } finally {
+    release()
   }
 }
 
