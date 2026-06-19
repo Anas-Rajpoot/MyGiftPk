@@ -89,14 +89,40 @@ interface WooRestAttributeTerm {
 
 /* ── Fetch helper ─────────────────────────────────── */
 
+// Statuses worth retrying: rate-limit (429) and transient server/proxy errors.
+const RETRYABLE = new Set([429, 502, 503, 504])
+const MAX_RETRIES = 4
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/**
+ * fetch() against the Woo REST API with exponential backoff on 429/5xx.
+ * During static generation the build fires many product requests in a burst;
+ * the host rate-limits with 429, which would otherwise abort the whole build.
+ * Honours the `Retry-After` header when present, else backs off 0.5s,1s,2s,4s.
+ */
+async function wooFetch(url: string, label: string): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, {
+      headers: { Authorization: auth() },
+      next: { revalidate: 3600 },
+    })
+    if (res.ok || !RETRYABLE.has(res.status) || attempt >= MAX_RETRIES) {
+      if (!res.ok) throw new Error(`WooCommerce REST ${res.status}: ${label}`)
+      return res
+    }
+    const retryAfter = Number(res.headers.get('Retry-After'))
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : 500 * 2 ** attempt
+    await sleep(waitMs)
+  }
+}
+
 async function wooGet<T>(path: string, params: Record<string, string | number> = {}): Promise<T> {
   const url = new URL(`${WP_BASE}/wp-json/wc/v3${path}`)
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)))
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: auth() },
-    next: { revalidate: 3600 },
-  })
-  if (!res.ok) throw new Error(`WooCommerce REST ${res.status}: ${path}`)
+  const res = await wooFetch(url.toString(), path)
   return res.json() as Promise<T>
 }
 
@@ -312,12 +338,7 @@ export async function fetchWooProducts(filters: WooProductFilters = {}): Promise
   const url = new URL(`${WP_BASE}/wp-json/wc/v3/products`)
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
 
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: auth() },
-    next: { revalidate: 3600 },
-  })
-
-  if (!res.ok) throw new Error(`WooCommerce REST ${res.status}: /products`)
+  const res = await wooFetch(url.toString(), '/products')
 
   const total = parseInt(res.headers.get('X-WP-Total') ?? '0', 10)
   const totalPages = parseInt(res.headers.get('X-WP-TotalPages') ?? '1', 10)

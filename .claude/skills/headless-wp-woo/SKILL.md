@@ -164,3 +164,7 @@ always allowed; guest order tracking = order number + billing phone match via RE
    routes → friendly error component, never a crash.
 5. Hidden "Gift Components" products: excluded from shop queries, sitemaps, search;
    fetched only by the gift-builder.
+6. Woo REST calls go through `wooFetch` (lib/woo/rest-client.ts), which retries
+   429/502/503/504 with exponential backoff (honouring `Retry-After`). Static
+   generation fires product fetches in a burst; without backoff the host's 429
+   rate-limit aborts the whole build. Never add a raw `fetch` to wc/v3 — reuse it.
