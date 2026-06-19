@@ -30,17 +30,13 @@ interface Props {
   searchParams: Promise<RawSearchParams>
 }
 
+// ISR — same reasoning as /product/[slug]: burst SSG calls trigger 429s on the
+// WooCommerce host. Categories are edge-cached after first request.
+export const dynamicParams = true
+export const revalidate = 3600
+
 export async function generateStaticParams() {
-  if (WOO_REST_ENABLED) {
-    const slugs = await fetchWooCategorySlugs()
-    return slugs.map((slug) => ({ slug }))
-  }
-  const data = await fetchGraphQL<{ productCategories: { nodes: { slug: string }[] } }>(
-    GET_CATEGORY_SLUGS,
-    {},
-    { revalidate: 86400 }
-  )
-  return (data.productCategories?.nodes ?? []).map((n) => ({ slug: n.slug }))
+  return []
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

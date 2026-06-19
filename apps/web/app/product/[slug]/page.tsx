@@ -25,21 +25,14 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
+// Do not pre-render product pages at build time — the WooCommerce host rate-limits
+// burst SSG calls and aborts the build. All product pages use ISR: rendered on first
+// request, then edge-cached. dynamicParams defaults to true so any slug works.
+export const dynamicParams = true
+export const revalidate = 3600
+
 export async function generateStaticParams() {
-  try {
-    if (WOO_REST_ENABLED) {
-      const slugs = await fetchWooProductSlugs()
-      return slugs.map((slug) => ({ slug }))
-    }
-    const data = await fetchGraphQL<{ products: { nodes: { slug: string }[] } }>(
-      GET_PRODUCT_SLUGS,
-      { first: 100 },
-      { revalidate: 86400 }
-    )
-    return (data.products?.nodes ?? []).map((n) => ({ slug: n.slug }))
-  } catch {
-    return []
-  }
+  return []
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
