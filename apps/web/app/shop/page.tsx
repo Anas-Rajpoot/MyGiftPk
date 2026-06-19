@@ -13,8 +13,7 @@ import { ActiveFilters } from '@/components/shop/ActiveFilters'
 import { ShopControls } from '@/components/shop/ShopControls'
 import { Pagination } from '@/components/shop/Pagination'
 import { RibbonHeading } from '@/components/ui/RibbonHeading'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 const BASE_PATH = '/shop'
 const PER_PAGE = 12
 

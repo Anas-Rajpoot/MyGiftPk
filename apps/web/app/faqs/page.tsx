@@ -3,8 +3,7 @@ import { ContentPageLayout } from '@/components/layout/ContentPageLayout'
 import { FaqsClient } from '@/components/content/FaqsClient'
 import { fetchFaqItems, DEFAULT_FAQS } from '@/lib/wp/home-content'
 import { breadcrumbSchema, faqPageSchema } from '@/lib/seo/schema'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 export const metadata: Metadata = {
   title: 'Frequently Asked Questions',

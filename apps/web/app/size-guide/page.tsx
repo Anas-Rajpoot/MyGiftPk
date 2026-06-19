@@ -4,8 +4,7 @@ import { Tabs } from '@/components/ui/Tabs'
 import { SizeTableClient } from '@/components/content/SizeTableClient'
 import { WOMEN_SIZES, MEN_SIZES, KIDS_SIZES } from '@/lib/content/size-charts'
 import { breadcrumbSchema } from '@/lib/seo/schema'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 export const metadata: Metadata = {
   title: 'Size Guide — Women, Men & Kids',

@@ -103,7 +103,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                 src={bgImage.src}
                 alt={bgImage.alt}
                 fill
-                sizes="100vw"
+                sizes="(max-width: 640px) 100vw, 1px"
                 className="object-cover sm:hidden"
                 style={{ objectPosition: bgImage.mobileObjectPosition }}
                 priority={active === 0}
@@ -114,7 +114,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                 src={bgImage.src}
                 alt={bgImage.alt}
                 fill
-                sizes="100vw"
+                sizes="(max-width: 640px) 1px, (min-width: 1921px) 1920px, 100vw"
                 className="object-cover hidden sm:block"
                 style={{ objectPosition: bgImage.desktopObjectPosition }}
                 priority={active === 0}
@@ -128,7 +128,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                     src={slide.desktopImage.sourceUrl}
                     alt={slide.desktopImage.altText}
                     fill
-                    sizes="100vw"
+                    sizes="(max-width: 640px) 1px, (min-width: 1921px) 1920px, 100vw"
                     className="object-cover hidden sm:block"
                     priority={active === 0}
                   />
@@ -137,7 +137,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                       src={slide.mobileImage.sourceUrl}
                       alt={slide.mobileImage.altText}
                       fill
-                      sizes="100vw"
+                      sizes="(max-width: 640px) 100vw, 1px"
                       className="object-cover sm:hidden"
                       priority={active === 0}
                     />

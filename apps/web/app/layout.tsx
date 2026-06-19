@@ -6,6 +6,7 @@ import { WOO_REST_ENABLED, fetchWooNavCategories } from '@/lib/woo/rest-client'
 import { NAV_ITEMS, FIXED_NAV_BEFORE, FIXED_NAV_AFTER } from '@/lib/config/nav'
 import { organizationSchema, webSiteSchema, localBusinessSchema } from '@/lib/seo/schema'
 import { fetchHomeContent, fetchGlobalOptions, DEFAULT_GLOBAL, DEFAULT_ANNOUNCEMENT } from '@/lib/wp/home-content'
+import { BASE_URL } from '@/lib/config/site'
 import { AnnouncementBar } from '@/components/layout/AnnouncementBar'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
   },
   description:
     'Shop clothing and build custom gift boxes delivered across Pakistan. Free shipping on orders over Rs. 3,000.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'),
+  metadataBase: new URL(BASE_URL),
 }
 
 export default async function RootLayout({

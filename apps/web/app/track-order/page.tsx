@@ -2,8 +2,7 @@ import type { Metadata } from 'next'
 import { ContentPageLayout } from '@/components/layout/ContentPageLayout'
 import { breadcrumbSchema } from '@/lib/seo/schema'
 import { TrackOrderClient } from '@/components/content/TrackOrderClient'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 export const metadata: Metadata = {
   title: 'Track Your Order',

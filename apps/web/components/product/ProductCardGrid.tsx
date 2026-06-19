@@ -74,7 +74,7 @@ export function ProductCardGrid({ products, columns = 4 }: ProductCardGridProps)
           key={p.id}
           slug={p.slug}
           name={p.name}
-          price={p.price}
+          price={p.regularPrice || p.price}
           salePrice={p.salePrice ?? undefined}
           badge={p.onSale ? 'sale' : undefined}
           image={p.image ? { src: p.image.sourceUrl, alt: p.image.altText } : undefined}
@@ -82,7 +82,7 @@ export function ProductCardGrid({ products, columns = 4 }: ProductCardGridProps)
           isAddingToCart={addingId === p.databaseId}
           onAddToCart={() => handleAddToCart(p)}
           onWishlist={() => {
-            toggle({ slug: p.slug, name: p.name, price: p.price, salePrice: p.salePrice ?? undefined, image: p.image ?? undefined })
+            toggle({ slug: p.slug, name: p.name, price: p.regularPrice || p.price, salePrice: p.salePrice ?? undefined, image: p.image ?? undefined })
           }}
           onQuickView={() => router.push(`/product/${p.slug}`)}
         />

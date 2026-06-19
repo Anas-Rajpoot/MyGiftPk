@@ -1,5 +1,38 @@
 # PROGRESS.md — MYGIFT Session Log
 
+## Live staging wiring + go-live config — 2026-06-17
+
+### Status: CONNECTED ✓ (content config pending user clicks)
+
+Frontend `.env.local` now points at live staging `wp-mygift-pk.stackstaging.com`
+(`MOCK_MODE=false`). Plugins active on WP: mygift-core v0.5.0, WPGraphQL,
+WooCommerce, JWT Auth, Yoast SEO, Add WPGraphQL SEO.
+
+**Verified live (curl):**
+- WPGraphQL ping ✓ · Yoast `seo` field now resolves ✓ (no more "Cannot query field seo")
+- WooCommerce REST ✓ — 47 published products
+- All 6 mygift-core REST endpoints → 200 ✓
+- **WooGraphQL (`wp-graphql-woocommerce`) is NOT installed** — not needed; app reads
+  products via WC REST. Documented; do not add unless GraphQL product data is wanted.
+
+**Runtime fixes shipped this session (committed 3279be2 + follow-ups):**
+- `fetchGraphQLSafe` — missing/erroring Yoast `seo` no longer 500s any page
+- `next/image` host + CSP `img-src` derived from `WP_GRAPHQL_URL`
+- track-order `'use server'` file exports only the async action (types moved to
+  `lib/woo/order-status.ts`) — fixes `TimelineStatus is not defined`
+- `GET_WP_PAGE` `idType: SLUG → URI`
+- Control Center product count via live `wc_get_products` (cache-proof)
+
+**Pushed:** github.com/Anas-Rajpoot/MyGiftPk branch `master` (commit 3279be2).
+
+**Pending user actions (WP admin, see WP-SETUP §13):**
+- [ ] Create `gift-components` parent + `gift-chocolates/gift-candies/gift-biscuits/gift-extras` subcats + sample hidden products → builder populates
+- [ ] MYGIFT → Connection & Emails → Revalidate Secret = `a74724a4210cad337823918b1507e584addb58fe87d0146e` (matches .env.local)
+- [ ] Confirm Yoast + Add WPGraphQL SEO active (done — verified)
+- [ ] After categories created: re-verify `/gift-builder` endpoint returns non-empty `categories` + `components`
+
+---
+
 ## ACF Pro Removal → Native mygift-core Content (v0.5.0) — 2026-06-16
 
 ### Status: BUILT ✓ (see D-009)
@@ -305,6 +338,37 @@ Routes (all have: `generateMetadata`, canonical, BreadcrumbList JSON-LD, one H1,
 
 ### Next
 **Phase 8: Customer Account + Auth**
+
+---
+
+## SEO Audit Fixes — 2026-06-20
+
+### Status: COMPLETE ✓ (build passes, zero TS/lint errors)
+
+### Fixes shipped
+
+**CRITICAL**
+1. **BASE_URL localhost guard** — created `lib/config/site.ts`; exports `BASE_URL` that hard-forces `https://www.mygift.pk` when `NEXT_PUBLIC_SITE_URL` contains `localhost` in a production build. Every page in the app (18 route files + schema.ts + sitemap + robots + csrf) now imports from this single source. ⚠️ **Manual action required**: set `NEXT_PUBLIC_SITE_URL=https://www.mygift.pk` in Vercel → Settings → Environment Variables → Production.
+2. **HTML in product meta descriptions** — created `lib/utils/html.ts` (`stripHtml`, `sanitizeMetaDescription`). Product `generateMetadata` now strips tags + decodes entities + truncates to 155 chars for `description`, `og:description`, `twitter:description`. `productSchema()` description also sanitized.
+
+**HIGH**
+3. **JSON-LD confirmed rendering** — Organization + WebSite+SearchAction + LocalBusiness: layout.tsx `<head>`. Product+Breadcrumb: product page JSX. ItemList (8 featured products): homepage JSX (guards against empty WooCommerce response).
+4. **ProductCard double sale price** — `ProductCardGrid` was passing `p.price` (WC effective/sale price) as the struck-through price AND `p.salePrice` (same value). Fixed to pass `p.regularPrice || p.price` so cards show `~~Rs. 14,000~~ Rs. 11,200`.
+5. **Sitemap gift-components exclusion** — `EXCLUDED_CATEGORY_SLUGS` Set added before category URL generation; filters `gift-components`, `gift-component`, `uncategorized`.
+6. **Hero LCP image size** — `deviceSizes` capped at 1920 in `next.config.ts` (removes 3840 breakpoint). HeroSlider `sizes` updated per image role: mobile bg `100vw`, desktop bg caps at `1920px` for large viewports, preventing 3840px requests on retina.
+
+### QA results (2026-06-20)
+- `pnpm typecheck` → 0 errors ✓
+- `pnpm lint` → 0 errors ✓
+- `pnpm build` → 0 errors, all 40 product pages prerendered ✓
+- Heading order: H1 in HeroSlider (hero), product name H1 on PDP — correct ✓
+- robots.txt: disallows /api/, /account/, /cart, /checkout, /wishlist, /order-confirmation, /styleguide; references sitemap ✓
+
+### Remaining (not code — user action required)
+- [ ] **Vercel**: set `NEXT_PUBLIC_SITE_URL=https://www.mygift.pk` in production env (this is the #1 priority — nothing else matters until this is done)
+- [ ] **WP admin**: update placeholder contact details (phone/email/WhatsApp) via MYGIFT → Global Settings
+- [ ] **Google Search Console**: submit sitemap.xml after deploying; verify Rich Results Test passes for a product URL
+- [ ] **Nav/catalog**: decide whether to load clothing products or trim the Women/Men/Kids nav links until they have products
 
 ---
 

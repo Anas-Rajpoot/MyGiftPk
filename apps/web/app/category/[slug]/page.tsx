@@ -15,6 +15,7 @@ import { fetchCategoryIntro } from '@/lib/wp/home-content'
 import { parseFilters } from '@/lib/utils/filters'
 import type { RawSearchParams } from '@/lib/utils/filters'
 import { breadcrumbSchema, collectionPageSchema } from '@/lib/seo/schema'
+import { BASE_URL } from '@/lib/config/site'
 import { FilterSidebar } from '@/components/shop/FilterSidebar'
 import { FilterBottomSheet } from '@/components/shop/FilterBottomSheet'
 import { ActiveFilters } from '@/components/shop/ActiveFilters'
@@ -60,20 +61,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!cat) return { title: 'Category' }
 
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
   const ogImage =
     cat.seo?.opengraphImage?.sourceUrl ??
     cat.image?.sourceUrl ??
-    `${base}/api/og?title=${encodeURIComponent(cat.name)}&sub=${encodeURIComponent('mygift.pk')}`
+    `${BASE_URL}/api/og?title=${encodeURIComponent(cat.name)}&sub=${encodeURIComponent('mygift.pk')}`
 
   return {
     title: cat.seo?.title ?? cat.name,
     description: cat.seo?.metaDesc ?? cat.description,
-    alternates: { canonical: `${base}/category/${slug}` },
+    alternates: { canonical: `${BASE_URL}/category/${slug}` },
     openGraph: {
       title: cat.seo?.opengraphTitle ?? cat.name,
       description: cat.seo?.opengraphDescription ?? cat.description ?? '',
-      url: `${base}/category/${slug}`,
+      url: `${BASE_URL}/category/${slug}`,
       images: [ogImage],
     },
     twitter: {
@@ -142,8 +142,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const totalPages = Math.ceil(found / PER_PAGE)
 
   const breadcrumb = breadcrumbSchema([
-    { name: 'Home', url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk' },
-    { name: cat.name, url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'}${basePath}` },
+    { name: 'Home', url: BASE_URL },
+    { name: cat.name, url: `${BASE_URL}${basePath}` },
   ])
   const collectionSchema = collectionPageSchema(cat)
 

@@ -5,8 +5,7 @@ import {
   WOO_REST_ENABLED,
 } from '@/lib/woo/rest-client'
 import { fetchGraphQL } from '@/lib/wp/client'
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as BASE } from '@/lib/config/site'
 
 export const revalidate = 3600
 
@@ -49,6 +48,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // leave empty — rest of sitemap still served
   }
 
+  // Category slugs that are internal-only and must never appear in the sitemap.
+  const EXCLUDED_CATEGORY_SLUGS = new Set([
+    'gift-components',
+    'gift-component',
+    'uncategorized',
+  ])
+
   if (WOO_REST_ENABLED) {
     try {
       ;[productSlugs, categorySlugs] = await Promise.all([
@@ -86,6 +92,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly',
     priority: 0.7,
   }))
+
+  categorySlugs = categorySlugs.filter((slug) => !EXCLUDED_CATEGORY_SLUGS.has(slug))
 
   const categoryUrls: MetadataRoute.Sitemap = categorySlugs.map((slug) => ({
     url: `${BASE}/category/${slug}`,

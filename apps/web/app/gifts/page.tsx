@@ -10,8 +10,7 @@ import {
   type WooCategoryCard,
 } from '@/lib/woo/rest-client'
 import type { LucideIcon } from 'lucide-react'
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL } from '@/lib/config/site'
 
 export const metadata: Metadata = {
   title: 'Gifts — MYGIFT',

@@ -4,8 +4,9 @@ import { GET_HOME_SEO } from '@/lib/wp/queries/home'
 import type { HomePageData } from '@/lib/wp/queries/home'
 import { fetchHomeContent, DEFAULT_HOME_CONTENT } from '@/lib/wp/home-content'
 import { HomeBlockRenderer } from '@/components/home/HomeBlockRenderer'
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE_URL } from '@/lib/config/site'
+import { itemListSchema } from '@/lib/seo/schema'
+import { fetchWooProducts, WOO_REST_ENABLED } from '@/lib/woo/rest-client'
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await fetchGraphQLSafe<HomePageData>(
@@ -42,7 +43,30 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const homeContent = (await fetchHomeContent()) ?? DEFAULT_HOME_CONTENT
+  const [homeContent, featured] = await Promise.all([
+    fetchHomeContent(),
+    WOO_REST_ENABLED
+      ? fetchWooProducts({ first: 8 }).catch(() => null)
+      : Promise.resolve(null),
+  ])
 
-  return <HomeBlockRenderer blocks={homeContent.blocks} />
+  const listSchema = itemListSchema(
+    (featured?.nodes ?? []).map((p) => ({
+      name: p.name,
+      url: `${SITE_URL}/product/${p.slug}`,
+      image: p.image?.sourceUrl,
+    }))
+  )
+
+  return (
+    <>
+      {featured && featured.nodes.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(listSchema) }}
+        />
+      )}
+      <HomeBlockRenderer blocks={(homeContent ?? DEFAULT_HOME_CONTENT).blocks} />
+    </>
+  )
 }

@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 export function validateOrigin(req: NextRequest): boolean {
   const origin = req.headers.get('origin')

@@ -1,7 +1,7 @@
 import type { FooterSocials } from '@/lib/wp/queries/global'
 import type { ProductFull, CategoryData } from '@/lib/wp/queries/shop'
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as BASE } from '@/lib/config/site'
+import { stripHtml } from '@/lib/utils/html'
 
 export function organizationSchema(socials?: FooterSocials) {
   const sameAs = [
@@ -56,7 +56,7 @@ export function productSchema(product: ProductFull) {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: product.shortDescription || product.description,
+    description: stripHtml(product.shortDescription || product.description || product.name),
     sku: product.sku,
     url,
     image: product.image?.sourceUrl
@@ -66,11 +66,26 @@ export function productSchema(product: ProductFull) {
     offers: {
       '@type': 'Offer',
       priceCurrency: 'PKR',
-      price: product.salePrice ?? product.price,
+      price: parseFloat((product.salePrice ?? product.price ?? '0').replace(/[^\d.]/g, '')) || undefined,
       availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       url,
+      itemCondition: 'https://schema.org/NewCondition',
       seller: { '@type': 'Organization', name: 'MYGIFT' },
     },
+  }
+}
+
+export function itemListSchema(items: { name: string; url: string; image?: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      url: item.url,
+      image: item.image,
+    })),
   }
 }
 

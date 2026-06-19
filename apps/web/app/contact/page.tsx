@@ -5,8 +5,7 @@ import { RibbonHeading } from '@/components/ui/RibbonHeading'
 import { ContactForm } from '@/components/content/ContactForm'
 import { fetchGlobalOptions, DEFAULT_GLOBAL } from '@/lib/wp/home-content'
 import { breadcrumbSchema, localBusinessSchema } from '@/lib/seo/schema'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 export const metadata: Metadata = {
   title: 'Contact Us',

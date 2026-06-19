@@ -8,8 +8,7 @@ import { GET_WP_PAGE } from '@/lib/wp/queries/pages'
 import type { WpPage } from '@/lib/wp/queries/pages'
 import { breadcrumbSchema } from '@/lib/seo/schema'
 import { extractToc } from '@/lib/content/toc'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',

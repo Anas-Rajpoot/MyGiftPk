@@ -62,6 +62,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
+    // Cap at 1920 — prevents the browser requesting the 3840px variant on
+    // retina desktops for a full-width hero, which was the LCP bottleneck.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: imgHosts.map((hostname) => ({ protocol: 'https' as const, hostname })),
   },
   async headers() {

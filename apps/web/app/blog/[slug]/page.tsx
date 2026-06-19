@@ -9,8 +9,7 @@ import { fetchGraphQL, fetchGraphQLSafe } from '@/lib/wp/client'
 import { GET_BLOG_POST, GET_BLOG_SLUGS } from '@/lib/wp/queries/pages'
 import type { BlogPostFull } from '@/lib/wp/queries/pages'
 import { breadcrumbSchema, articleSchema } from '@/lib/seo/schema'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 interface BlogPostResponse {
   post: BlogPostFull | null

@@ -8,8 +8,7 @@ import type { JobListing, WpPage } from '@/lib/wp/queries/pages'
 import { fetchJobListings } from '@/lib/wp/home-content'
 import { breadcrumbSchema } from '@/lib/seo/schema'
 import { MapPin, Briefcase } from 'lucide-react'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 export const metadata: Metadata = {
   title: 'Careers at MYGIFT',

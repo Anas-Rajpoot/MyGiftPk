@@ -6,8 +6,7 @@ import { fetchGraphQL } from '@/lib/wp/client'
 import { GET_BLOG_POSTS } from '@/lib/wp/queries/pages'
 import type { BlogPost } from '@/lib/wp/queries/pages'
 import { breadcrumbSchema } from '@/lib/seo/schema'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
+import { BASE_URL as SITE } from '@/lib/config/site'
 
 export const metadata: Metadata = {
   title: 'Blog — Gift Ideas & Style Tips',

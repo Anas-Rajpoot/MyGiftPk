@@ -10,6 +10,8 @@ import {
   WOO_REST_ENABLED,
 } from '@/lib/woo/rest-client'
 import { breadcrumbSchema, productSchema } from '@/lib/seo/schema'
+import { BASE_URL } from '@/lib/config/site'
+import { sanitizeMetaDescription } from '@/lib/utils/html'
 import Link from 'next/link'
 import { ShieldCheck, RefreshCw, Truck, BadgeCheck } from 'lucide-react'
 import { ProductGallery } from '@/components/product/ProductGallery'
@@ -58,26 +60,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!product) return { title: 'Product' }
 
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'
   const ogImage =
     product.seo?.opengraphImage?.sourceUrl ??
     product.image?.sourceUrl ??
-    `${base}/api/og?title=${encodeURIComponent(product.name)}&sub=${encodeURIComponent('mygift.pk')}`
+    `${BASE_URL}/api/og?title=${encodeURIComponent(product.name)}&sub=${encodeURIComponent('mygift.pk')}`
+
+  const plainDesc = sanitizeMetaDescription(
+    product.seo?.metaDesc || product.shortDescription || product.name
+  )
+  const ogDesc = sanitizeMetaDescription(
+    product.seo?.opengraphDescription || product.seo?.metaDesc || product.shortDescription || product.name
+  )
 
   return {
     title: product.seo?.title ?? product.name,
-    description: product.seo?.metaDesc ?? product.shortDescription,
-    alternates: { canonical: `${base}/product/${slug}` },
+    description: plainDesc,
+    alternates: { canonical: `${BASE_URL}/product/${slug}` },
     openGraph: {
       title: product.seo?.opengraphTitle ?? product.name,
-      description: product.seo?.opengraphDescription ?? product.shortDescription ?? '',
-      url: `${base}/product/${slug}`,
-      images: [ogImage],
+      description: ogDesc,
+      url: `${BASE_URL}/product/${slug}`,
+      type: 'website',
+      images: [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       title: product.seo?.opengraphTitle ?? product.name,
-      description: product.seo?.opengraphDescription ?? product.shortDescription ?? '',
+      description: ogDesc,
       images: [ogImage],
     },
   }
@@ -109,14 +118,14 @@ export default async function ProductPage({ params }: Props) {
   }
 
   const breadcrumb = breadcrumbSchema([
-    { name: 'Home', url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk' },
+    { name: 'Home', url: BASE_URL },
     {
       name: firstCat?.name ?? 'Shop',
-      url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'}/category/${firstCat?.slug ?? 'shop'}`,
+      url: `${BASE_URL}/category/${firstCat?.slug ?? 'shop'}`,
     },
     {
       name: product.name,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mygift.pk'}/product/${product.slug}`,
+      url: `${BASE_URL}/product/${product.slug}`,
     },
   ])
   const pSchema = productSchema(product)
